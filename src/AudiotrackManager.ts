@@ -1,54 +1,35 @@
-import {
-  dropFromArray,
-  getFileName,
-  getCurrentCaption,
-  populateTracks,
-} from "./utils"
-import type {
-  Track,
-  AudioOptions,
-  AudioManagerState,
-  CaptionState,
-  Listener,
-  Audio,
-  Subtitle,
-  PlayRequest,
-  Logger,
-  AudiotrackManagerState,
-  SubtitlesJSON,
-  ValueOf,
-  PartiallyRequired,
-} from "./types"
-import { DEFAULT_NUMBER_OF_TRACKS, DEFAULT_VOLUME, LOG_LEVEL } from "./config"
+import * as U from "./utils"
+import * as C from "./constants"
+import type * as T from "./types"
 
 class AudiotrackManager {
   /* MUTABLE CONFIGURATION */
   static #debug: boolean = false
-  static #subtitlesJSON: SubtitlesJSON = {}
+  static #subtitlesJSON: T.SubtitlesJSON = {}
   static #defaultVolume: number = 0.5
   static #supportedLocales: string[] = ["en"]
   static #fallbackLocale: string = this.#supportedLocales[0]!
-  static #defaultAudioOptions: AudioOptions = {
+  static #defaultAudioOptions: T.AudioOptions = {
     locale: this.#fallbackLocale,
   }
 
   /* STATE */
-  static #state: AudioManagerState = {
-    tracks: populateTracks(DEFAULT_NUMBER_OF_TRACKS),
+  static #state: T.AudioManagerState = {
+    tracks: U.populateTracks(C.DEFAULT_NUMBER_OF_TRACKS),
     playRequests: [],
-    globalVolume: DEFAULT_VOLUME,
+    globalVolume: C.DEFAULT_VOLUME,
     globalMuted: false,
     jitsiIsMuted: false,
     conferenceVolumes: {},
   }
 
-  private static state_listeners: Listener<AudioManagerState>[] = []
+  private static state_listeners: T.Listener<T.AudioManagerState>[] = []
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
   /* - - - - - - - - - - - - - CONFIG - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  public static setConfiguration(args: AudiotrackManagerState) {
+  public static setConfiguration(args: T.AudiotrackManagerState) {
     if (args.debug) {
       this.#debug = args.debug
     }
@@ -73,7 +54,7 @@ class AudiotrackManager {
       if (_locale && !args.supportedLocales.includes(_locale)) {
         _locale = this.#fallbackLocale
       }
-      const payload: AudioOptions = { ...rest }
+      const payload: T.AudioOptions = { ...rest }
       if (_locale) {
         payload.locale = _locale
       }
@@ -82,7 +63,7 @@ class AudiotrackManager {
     /* GRACEFULLY HANDLE REDUCING (DELETING) TRACKS LENGTH */
   }
 
-  public static initialize(args: AudiotrackManagerState) {
+  public static initialize(args: T.AudiotrackManagerState) {
     const { number_of_tracks, ...rest } = args
     this.setConfiguration(rest)
     /* CANNOT REDUCE TRACK NUMBERS WITH THIS METHOD */
@@ -92,7 +73,7 @@ class AudiotrackManager {
     ) {
       this.purgeAllTracks()
       this.updateState({
-        tracks: populateTracks(args.number_of_tracks, this.#defaultVolume),
+        tracks: U.populateTracks(args.number_of_tracks, this.#defaultVolume),
       })
     }
   }
@@ -101,20 +82,20 @@ class AudiotrackManager {
   /* - - - - - - - - - - - STATE MANAGEMENT - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  public static getState(): AudioManagerState {
+  public static getState(): T.AudioManagerState {
     return this.#State
   }
 
-  static get #State(): AudioManagerState {
+  static get #State(): T.AudioManagerState {
     return this.#state
   }
 
-  static set #State(value: AudioManagerState) {
+  static set #State(value: T.AudioManagerState) {
     this.#state = value
     this.emit()
   }
 
-  static onStateChange(listener: Listener<AudioManagerState>): () => void {
+  static onStateChange(listener: T.Listener<T.AudioManagerState>): () => void {
     this.state_listeners.push(listener)
     return () => {
       this.state_listeners = this.state_listeners.filter((l) => l !== listener)
@@ -129,18 +110,18 @@ class AudiotrackManager {
   /* - - - - - ABSTRACTION LAYER TO ENSURE SETTER TRIGGER - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  static updateState(value: Partial<AudioManagerState>) {
+  static updateState(value: Partial<T.AudioManagerState>) {
     const prev = this.#State
     this.#State = { ...prev, ...value }
   }
 
-  static getTrack(index: number): Track | null {
+  static getTrack(index: number): T.Track | null {
     if (!this.#State.tracks.length) return null
     if (index < 0 && index >= this.#State.tracks.length) return null
     return this.#State.tracks[index]!
   }
 
-  static updateTrack(index: number, payload: Partial<Track>) {
+  static updateTrack(index: number, payload: Partial<T.Track>) {
     const track = this.getTrack(index)
     if (!track) return
     if (payload.queue) {
@@ -169,7 +150,7 @@ class AudiotrackManager {
     this.updateState({ tracks: prevTracks })
   }
 
-  static pushToQueue(trackIdx: number, payload: Audio) {
+  static pushToQueue(trackIdx: number, payload: T.Audio) {
     const track = this.getTrack(trackIdx)
     if (!track) return
     track.queue.push(payload)
@@ -181,7 +162,7 @@ class AudiotrackManager {
   static injectToQueue(
     trackIdx: number,
     splicingIndex: number,
-    payload: Audio
+    payload: T.Audio
   ) {
     const track = this.getTrack(trackIdx)
     if (!track) return
@@ -210,8 +191,8 @@ class AudiotrackManager {
     })
   }
 
-  static registerPlayRequests = (args: Array<Omit<PlayRequest, "id">>) => {
-    const payload: PlayRequest[] = []
+  static registerPlayRequests = (args: Array<Omit<T.PlayRequest, "id">>) => {
+    const payload: T.PlayRequest[] = []
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]!
       const dup = this.#State.playRequests.find((vm) => vm.src === arg.src)
@@ -224,7 +205,7 @@ class AudiotrackManager {
         continue
       }
       const uid = Date.now().toString()
-      let new_message: PlayRequest = {
+      let new_message: T.PlayRequest = {
         id: uid,
         src: arg.src,
         trackIdx: arg.trackIdx,
@@ -240,11 +221,11 @@ class AudiotrackManager {
 
   private static createAudio = (
     src: string,
-    audioOptions: PartiallyRequired<AudioOptions, "volume" | "trackIdx"> & {
+    audioOptions: T.PartiallyRequired<T.AudioOptions, "volume" | "trackIdx"> & {
       muted?: boolean
     }
   ) => {
-    const filename = getFileName(src)
+    const filename = U.getFileName(src)
     const {
       trackIdx,
       volume,
@@ -268,7 +249,7 @@ class AudiotrackManager {
     }
     audio.setAttribute("id", uid)
     let _keyForSubtitles = keyForSubtitles ?? filename
-    let _subtitles: null | Subtitle[] =
+    let _subtitles: null | T.Subtitle[] =
       subtitles ??
       Object.prototype.hasOwnProperty.call(
         this.#subtitlesJSON,
@@ -280,7 +261,7 @@ class AudiotrackManager {
     const update = (e: Event) => {
       if (!_subtitles || !trackIdxIsValid) return
       this.updateTrack(trackIdx, {
-        caption: getCurrentCaption(_subtitles, audio.currentTime, _locale),
+        caption: U.getCurrentCaption(_subtitles, audio.currentTime, _locale),
       })
     }
     const endingCallback = () => {
@@ -339,7 +320,7 @@ class AudiotrackManager {
         this.clearAudio(uid, filename)
       }
     }
-    const audioItem: Audio = {
+    const audioItem: T.Audio = {
       id: uid,
       src: src,
       audio: audio,
@@ -354,7 +335,7 @@ class AudiotrackManager {
   //         Doing so also overrides the `loop` value to `false`.
   //         Playing an audio this way allows overlapping as many times as possible; it's useful for sound effects like notifications.
   //         For this use case, please use `playAudio` instead of accessing this feature directly from `registerAudio`.
-  public static registerAudio = (src: string, options: AudioOptions) => {
+  public static registerAudio = (src: string, options: T.AudioOptions) => {
     const _options = options ?? this.#defaultAudioOptions
     const { trackIdx = 0, priority, allowDuplicate } = _options
     /* const playWithoutRegistering = trackIdx === -1 */
@@ -413,7 +394,7 @@ class AudiotrackManager {
   private static getAudioBySourceName(
     sourceName: string,
     method: "match" | "include" = "match"
-  ): Audio | null {
+  ): T.Audio | null {
     for (let i = 0; i < this.#State.tracks.length; i++) {
       for (let j = 0; j < this.#State.tracks[i]!.queue.length; j++) {
         const queue = this.#State.tracks[i]!.queue!
@@ -430,7 +411,7 @@ class AudiotrackManager {
 
   public static playAudio = (
     src: string,
-    options: Pick<AudioOptions, "onStart" | "onEnd" | "volume"> & {
+    options: Pick<T.AudioOptions, "onStart" | "onEnd" | "volume"> & {
       muted?: boolean
     }
   ) => {
@@ -466,7 +447,7 @@ class AudiotrackManager {
     if (!track?.queue.length) return
     const next_audio = track.queue[0]!
     if (!next_audio.audio.currentTime) {
-      log(`play next audio: ${getFileName(next_audio.src)}`, this.#debug)
+      log(`play next audio: ${U.getFileName(next_audio.src)}`, this.#debug)
       next_audio.play()
     }
   }
@@ -497,7 +478,7 @@ class AudiotrackManager {
       return
     }
     this.updateTrack(trackIdx, {
-      queue: dropFromArray(this.#State.tracks[trackIdx]!.queue, soundIdx),
+      queue: U.dropFromArray(this.#State.tracks[trackIdx]!.queue, soundIdx),
       currentlyPlaying: "",
     })
     log(`clear ${filename}`, this.#debug)
@@ -576,18 +557,18 @@ class AudiotrackManager {
 function log(
   message: any,
   debug = false,
-  logLevel: ValueOf<typeof LOG_LEVEL> = LOG_LEVEL.debug,
+  logLevel: T.ValueOf<typeof C.LOG_LEVEL> = C.LOG_LEVEL.debug,
   alertErrorOnProduction = false
 ) {
   if (!debug) return
   let isError = false
-  let println: Logger | undefined
+  let println: T.Logger | undefined
   switch (logLevel) {
-    case LOG_LEVEL.error:
+    case C.LOG_LEVEL.error:
       println = console.error
       isError = true
       break
-    case LOG_LEVEL.warn:
+    case C.LOG_LEVEL.warn:
       println = console.warn
       break
     default:

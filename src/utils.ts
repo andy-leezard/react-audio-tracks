@@ -1,4 +1,4 @@
-import { CaptionState, Subtitle, Track } from "./types"
+import type { CaptionState, Subtitle, Track } from "./types"
 
 const dropFromArray = (arr: any[], idx: number) => {
   if (!(arr instanceof Array) || idx < 0) return arr
