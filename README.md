@@ -3,6 +3,28 @@
 - A light-weight solution to manage audio tracks and captions in front-end web projects.
 - Optimized for React projects.
 
+# example
+
+Initialize `AudioTrackManager` class with parameters.
+
+```javascript
+import AudioTrackManager from 'react-audio-tracks'
+import Subtitles from './Subtitles.json'
+
+AudioTrackManager.initialize({
+    debug: true,
+    subtitlesJSON: Subtitles,
+    number_of_tracks: 3,
+    defaultVolume: 0.7,
+    defaultAudioOptions: {
+        locale: "fr",
+    }
+    fallbackLocale: "fr",
+    supportedLocales: ["en", "fr", "ko"],
+})
+
+```
+
 # Maintenance
 
 I am using `changeset` to make versioning easier.
