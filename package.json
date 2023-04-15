@@ -8,6 +8,7 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
+    "release": "pnpm run build && changeset publish",
     "lint": "tsc"
   },
   "repository": "https://github.com/AndyLeezard/react-audio-tracks",
