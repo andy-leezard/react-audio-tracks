@@ -1,0 +1,38 @@
+{
+  "name": "react-audio-tracks",
+  "version": "0.9.0",
+  "description": "test",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsup index.ts --format cjs,esm --dts",
+    "lint": "tsc"
+  },
+  "repository": "https://github.com/AndyLeezard/react-audio-tracks",
+  "author": "Andy Lee <a.lee.intl@gmail.com> (https://github.com/AndyLeezard)",
+  "bugs": {
+    "url": "https://github.com/AndyLeezard/react-audio-tracks/issues"
+  },
+  "homepage": "https://github.com/AndyLeezard/react-audio-tracks#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "keywords": [
+    "react",
+    "audio",
+    "track",
+    "audio tracks",
+    "react-audio-tracks"
+  ],
+  "devDependencies": {
+    "@changesets/cli": "^2.26.1",
+    "@types/react": "^18.0.35",
+    "tsup": "^6.7.0",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "react": "^18.2.0"
+  }
+}
