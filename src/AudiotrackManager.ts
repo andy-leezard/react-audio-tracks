@@ -181,13 +181,21 @@ class AudiotrackManager {
   /* - - - - - - - - - - - - - - CORE - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
+  public static purgeTrack(trackIdx: number) {
+    const track = this.getTrack(trackIdx)
+    if (!track?.queue.length) return
+    let queue = track.queue
+    if (queue.length) {
+      const currentlyPlaying = queue[0]!
+      queue = queue.slice(0, 1)
+      currentlyPlaying.forceStop()
+    }
+    this.updateTrack(trackIdx, { queue })
+  }
+
   private static purgeAllTracks() {
-    this.#State.tracks.forEach((track) => {
-      if (track.queue.length) {
-        const currentlyPlaying = track.queue[0]!
-        track.queue = track.queue.slice(0, 1)
-        currentlyPlaying.forceStop()
-      }
+    this.#State.tracks.forEach((track, idx) => {
+      this.purgeTrack(idx)
     })
   }
 
@@ -335,7 +343,7 @@ class AudiotrackManager {
   //         Doing so also overrides the `loop` value to `false`.
   //         Playing an audio this way allows overlapping as many times as possible; it's useful for sound effects like notifications.
   //         For this use case, please use `playAudio` instead of accessing this feature directly from `registerAudio`.
-  public static registerAudio = (src: string, options: T.AudioOptions) => {
+  public static registerAudio = (src: string, options?: T.AudioOptions) => {
     const _options = options ?? this.#defaultAudioOptions
     const { trackIdx = 0, priority, allowDuplicate } = _options
     /* const playWithoutRegistering = trackIdx === -1 */
@@ -411,7 +419,7 @@ class AudiotrackManager {
 
   public static playAudio = (
     src: string,
-    options: Pick<T.AudioOptions, "onStart" | "onEnd" | "volume"> & {
+    options?: Pick<T.AudioOptions, "onStart" | "onEnd" | "volume"> & {
       muted?: boolean
     }
   ) => {
