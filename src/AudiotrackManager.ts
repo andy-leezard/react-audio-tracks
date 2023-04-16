@@ -1,6 +1,7 @@
 import * as U from "./utils"
 import * as C from "./constants"
 import type * as T from "./types"
+import AudioItem from "./AudioItem"
 
 class AudiotrackManager {
   /* MUTABLE CONFIGURATION */
@@ -30,13 +31,13 @@ class AudiotrackManager {
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
   public static setConfiguration(args: T.AudiotrackManagerState) {
-    if (args.debug) {
+    if (typeof args.debug === "boolean") {
       this.#debug = args.debug
     }
     if (args.subtitlesJSON) {
       this.#subtitlesJSON = args.subtitlesJSON
     }
-    if (args.defaultVolume) {
+    if (typeof args.defaultVolume === "number") {
       this.#defaultVolume = args.defaultVolume
     }
     if (args.fallbackLocale) {
@@ -127,17 +128,45 @@ class AudiotrackManager {
     if (payload.queue) {
       track.queue = payload.queue
     }
+    if (typeof payload.autoPlay === "boolean") {
+      track.autoPlay = payload.autoPlay
+      track.queue.forEach((item, idx) => {
+        if (item.audio) {
+          item.autoPlay = track.autoPlay
+        }
+      })
+      const isPlaying = this.resumeTrack(index)
+      track.isPlaying = isPlaying
+    }
     if (typeof payload.muted === "boolean") {
       track.muted = payload.muted
-      track.queue.forEach((sound) => {
-        sound.audio.muted = track.muted
+      track.queue.forEach((item) => {
+        if (item.audio) {
+          item.audio.muted = track.muted
+        }
       })
     }
     if (typeof payload.volume === "number") {
       track.volume = payload.volume
-      track.queue.forEach((sound) => {
-        sound.audio.volume = track.volume
+      track.queue.forEach((item) => {
+        if (item.audio) {
+          item.audio.volume = track.volume
+        }
       })
+    }
+    if (typeof payload.loop === "boolean") {
+      track.loop = payload.loop
+      track.queue.forEach((item) => {
+        if (item.audio) {
+          item.audio.loop = track.loop
+        }
+      })
+    }
+    if (typeof payload.isPlaying === "boolean") {
+      track.isPlaying = payload.isPlaying
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "currentAudio")) {
+      track.currentAudio = payload.currentAudio ?? null
     }
     if (typeof payload.currentlyPlaying === "string") {
       track.currentlyPlaying = payload.currentlyPlaying
@@ -150,7 +179,7 @@ class AudiotrackManager {
     this.updateState({ tracks: prevTracks })
   }
 
-  static pushToQueue(trackIdx: number, payload: T.Audio) {
+  static pushToQueue(trackIdx: number, payload: T.IAudioItem) {
     const track = this.getTrack(trackIdx)
     if (!track) return
     track.queue.push(payload)
@@ -162,7 +191,7 @@ class AudiotrackManager {
   static injectToQueue(
     trackIdx: number,
     splicingIndex: number,
-    payload: T.Audio
+    payload: T.IAudioItem
   ) {
     const track = this.getTrack(trackIdx)
     if (!track) return
@@ -177,6 +206,43 @@ class AudiotrackManager {
     this.updateState({ tracks: prevTracks })
   }
 
+  public static togglePlayTrack(index: number) {
+    const track = this.getTrack(index)
+    if (!track?.queue.length) return
+    const audioItem = track.queue[0]
+    const audio = audioItem?.audio
+    if (!audioItem || !audio) return
+    if (audioItem.loaded) {
+      // prevent registering event listeners multiple times
+      let isPlaying = audio.paused
+      if (audio.paused) {
+        audio.play()
+      } else {
+        audio.pause()
+      }
+      this.updateTrack(index, { isPlaying })
+    } else {
+      audioItem.play()
+    }
+  }
+
+  public static resumeTrack(index: number): boolean {
+    const track = this.getTrack(index)
+    if (!track?.queue.length) return false
+    const audioItem = track.queue[0]
+    const audio = audioItem?.audio
+    if (!audioItem || !audio) return false
+    if (audioItem.loaded) {
+      if (audio.paused) {
+        audio.play()
+        this.updateTrack(index, { isPlaying: true })
+      }
+    } else {
+      audioItem.play()
+    }
+    return true
+  }
+
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
   /* - - - - - - - - - - - - - - CORE - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
@@ -188,7 +254,7 @@ class AudiotrackManager {
     if (queue.length) {
       const currentlyPlaying = queue[0]!
       queue = queue.slice(0, 1)
-      currentlyPlaying.forceStop()
+      currentlyPlaying.purge()
     }
     this.updateTrack(trackIdx, { queue })
   }
@@ -231,6 +297,7 @@ class AudiotrackManager {
     src: string,
     audioOptions: T.PartiallyRequired<T.AudioOptions, "volume" | "trackIdx"> & {
       muted?: boolean
+      loop?: boolean
     }
   ) => {
     const filename = U.getFileName(src)
@@ -241,7 +308,9 @@ class AudiotrackManager {
       muted,
       locale,
       keyForSubtitles,
+      autoPlay,
       subtitles,
+      originalFilename,
       onStart,
       onEnd,
     } = audioOptions
@@ -256,7 +325,7 @@ class AudiotrackManager {
       audio.loop = loop
     }
     audio.setAttribute("id", uid)
-    let _keyForSubtitles = keyForSubtitles ?? filename
+    let _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
     let _subtitles: null | T.Subtitle[] =
       subtitles ??
       Object.prototype.hasOwnProperty.call(
@@ -273,11 +342,6 @@ class AudiotrackManager {
       })
     }
     const endingCallback = () => {
-      if (_subtitles || !trackIdxIsValid) {
-        this.updateTrack(trackIdx, {
-          caption: null,
-        })
-      }
       if (onEnd) {
         onEnd()
       }
@@ -286,7 +350,11 @@ class AudiotrackManager {
     const fireOnLoad = () => {
       const promise = audio.play()
       if (trackIdxIsValid) {
-        this.updateTrack(trackIdx, { currentlyPlaying: filename })
+        this.updateTrack(trackIdx, {
+          isPlaying: true,
+          currentAudio: audioItem,
+          currentlyPlaying: filename,
+        })
       }
       if (promise !== undefined) {
         promise
@@ -328,13 +396,15 @@ class AudiotrackManager {
         this.clearAudio(uid, filename)
       }
     }
-    const audioItem: T.Audio = {
+    const audioItem = new AudioItem({
       id: uid,
       src: src,
+      filename: originalFilename ?? filename,
       audio: audio,
-      play: play,
-      forceStop: endingCallback,
-    }
+      autoPlay: autoPlay,
+      onPlay: play,
+      onPurge: endingCallback,
+    })
     return audioItem
   }
 
@@ -344,7 +414,9 @@ class AudiotrackManager {
   //         Playing an audio this way allows overlapping as many times as possible; it's useful for sound effects like notifications.
   //         For this use case, please use `playAudio` instead of accessing this feature directly from `registerAudio`.
   public static registerAudio = (src: string, options?: T.AudioOptions) => {
-    const _options = options ?? this.#defaultAudioOptions
+    const _options = options
+      ? { ...this.#defaultAudioOptions, ...options }
+      : this.#defaultAudioOptions
     const { trackIdx = 0, priority, allowDuplicate } = _options
     /* const playWithoutRegistering = trackIdx === -1 */
     const track = this.getTrack(trackIdx)
@@ -367,12 +439,19 @@ class AudiotrackManager {
       )
       return
     }
+    _options.volume =
+      typeof options?.volume === "number"
+        ? Math.min(_options.volume!, track.volume, this.#State.globalVolume)
+        : Math.min(track.volume, this.#State.globalVolume)
+    _options.autoPlay =
+      typeof options?.autoPlay === "boolean"
+        ? options?.autoPlay
+        : track.autoPlay
     const audioItem = this.createAudio(src, {
       ..._options,
-      trackIdx: trackIdx,
-      volume: track.volume,
       muted: track.muted || this.#State.globalMuted,
-    })
+      loop: track.loop,
+    } as Required<T.AudioOptions>)
     const queueLength = track.queue.length
     if (
       typeof priority === "number" &&
@@ -394,7 +473,7 @@ class AudiotrackManager {
     } else {
       this.pushToQueue(trackIdx, audioItem)
     }
-    if (queueLength <= 0) {
+    if (_options.autoPlay && queueLength <= 0) {
       audioItem.play()
     }
   }
@@ -402,7 +481,7 @@ class AudiotrackManager {
   private static getAudioBySourceName(
     sourceName: string,
     method: "match" | "include" = "match"
-  ): T.Audio | null {
+  ): T.IAudioItem | null {
     for (let i = 0; i < this.#State.tracks.length; i++) {
       for (let j = 0; j < this.#State.tracks[i]!.queue.length; j++) {
         const queue = this.#State.tracks[i]!.queue!
@@ -421,12 +500,16 @@ class AudiotrackManager {
     src: string,
     options?: Pick<T.AudioOptions, "onStart" | "onEnd" | "volume"> & {
       muted?: boolean
+      loop?: boolean
     }
   ) => {
     const audioItem = this.createAudio(src, {
       ...options,
       trackIdx: -1,
-      volume: this.#State.globalVolume,
+      volume:
+        typeof options?.volume === "number"
+          ? options.volume
+          : this.#State.globalVolume,
     })
     audioItem.play()
     return audioItem
@@ -441,11 +524,11 @@ class AudiotrackManager {
       if (!track?.queue.length) return
       const currentAudio = track.queue[0]!
       log(`force stopping : ${currentAudio.src}`, this.#debug)
-      currentAudio.forceStop()
+      currentAudio.purge()
     } else if (typeof target === "string") {
-      const audio = this.getAudioBySourceName(target, method)
-      if (audio) {
-        audio.forceStop()
+      const currentAudio = this.getAudioBySourceName(target, method)
+      if (currentAudio) {
+        currentAudio.purge()
       }
     }
   }
@@ -454,7 +537,7 @@ class AudiotrackManager {
     const track = this.getTrack(trackIdx)
     if (!track?.queue.length) return
     const next_audio = track.queue[0]!
-    if (!next_audio.audio.currentTime) {
+    if (next_audio.audio && !next_audio.audio?.currentTime) {
       log(`play next audio: ${U.getFileName(next_audio.src)}`, this.#debug)
       next_audio.play()
     }
@@ -467,7 +550,6 @@ class AudiotrackManager {
       for (let j = 0; j < track.queue.length; j++) {
         const _audio = track.queue[j]!
         if (_audio.id === uid) {
-          //sound = _audio
           return { trackIdx: i, soundIdx: j }
         }
       }
@@ -487,10 +569,14 @@ class AudiotrackManager {
     }
     this.updateTrack(trackIdx, {
       queue: U.dropFromArray(this.#State.tracks[trackIdx]!.queue, soundIdx),
+      caption: null,
+      currentAudio: null,
+      isPlaying: false,
       currentlyPlaying: "",
     })
     log(`clear ${filename}`, this.#debug)
-    if (this.#State.tracks[trackIdx]!.queue.length) {
+    const queue = this.#State.tracks[trackIdx]!.queue
+    if (queue.length && queue[0]?.autoPlay) {
       this.playNext(trackIdx)
     }
   }
@@ -500,8 +586,10 @@ class AudiotrackManager {
     const tracks = this.#State.tracks
     tracks.forEach((track) => {
       track.volume = val
-      track.queue.forEach((sound) => {
-        sound.audio.volume = val
+      track.queue.forEach((item) => {
+        if (item.audio) {
+          item.audio.volume = val
+        }
       })
     })
     this.updateState({ tracks: tracks, globalVolume: val })
@@ -513,8 +601,10 @@ class AudiotrackManager {
     const tracks = this.#State.tracks
     tracks.forEach((track) => {
       if (!track.muted) {
-        track.queue.forEach((sound) => {
-          sound.audio.muted = state
+        track.queue.forEach((item) => {
+          if (item.audio) {
+            item.audio.muted = state
+          }
         })
       }
     })

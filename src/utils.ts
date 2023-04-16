@@ -10,10 +10,16 @@ function populateTracks(length: number, volume = 0.5) {
   for (let i = 0; i < length; i++) {
     output.push({
       queue: [],
+      currentAudio: null,
+      isPlaying: false,
       name: `Track ${i + 1}`,
-      currentlyPlaying: "",
       volume: volume,
       muted: false,
+      loop: false,
+      autoPlay: false,
+
+      // depreated
+      currentlyPlaying: "",
     })
   }
   return output

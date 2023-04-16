@@ -35,19 +35,17 @@ export type Subtitle = {
   narrator?: string
 }
 
-export type Audio = {
-  id: string // unique identifier
-  src: string // audio source
-  audio: HTMLAudioElement
-  play: () => void
-  forceStop: () => void
-
-  subtitles?: Subtitle
-}
-
 export type AudioOptions = {
   volume?: number // a float between 0 - 1
-  loop?: boolean // will loop endlessly unless skipped later on.
+
+  // This overrides the track.autoPlay property
+  // If true: The audio will be played immediately on the queue.
+  //          If the audio is waiting on the queue, it will be automatically
+  //          played when all the previous items have finished playing.
+  //          If the queue is empty, the audio will be played immediately
+  //          after being registered to the queue.
+  // default: The audio shall be played on demand.
+  autoPlay?: boolean
 
   /* callbacks */
   onStart?: () => void | undefined
@@ -78,6 +76,15 @@ export type AudioOptions = {
   // 0 is the top priority -> will skip any current audio if exists
   // If there is an audio currently being played, and you want it to play right after, give 1.
   priority?: number
+
+  // Unlike static audio sources, user-uploaded audio file names will be received differently.
+  // In case this metadata matters, you can specify it.
+  originalFilename?: string
+
+  /**
+   * @deprecated Use `Track.loop` instead.
+   */
+  // loop?: boolean // will loop endlessly unless skipped later on.
 }
 
 export type CaptionState = {
@@ -92,17 +99,49 @@ export type CaptionState = {
   narrator?: string
 }
 
+export type AudioItemConstructor = {
+  id: string // unique identifier
+  src: string // audio source
+  filename: string
+  audio: HTMLAudioElement | undefined
+
+  // dynamically inherited from type: AudioOptions
+  autoPlay?: boolean
+
+  // refer to type: Subtitle
+  subtitles?: Subtitle
+}
+
+export interface IAudioItem extends AudioItemConstructor {
+  play: () => void
+  purge: () => void
+  // Indicates whether or not the event listeners were registered.
+  // If true: it specifically means that `play` method here has been already called.
+  loaded: boolean
+}
+
 export type Track = {
-  queue: Audio[]
+  queue: IAudioItem[]
+  currentAudio: IAudioItem | null
   name: string
   caption?: CaptionState | null
 
-  // name of the audio source file currently playing
-  currentlyPlaying: string
   // will be overriden by the global volume when that changes.
   volume: number
   // will not be overriden by the global mute value.
   muted: boolean
+  // will loop any audio registered
+  loop: boolean
+  // indicates if the current audio is currently playing
+  isPlaying: boolean
+  // indicates if the track should, by default, autoplay any audio being registered.
+  autoPlay: boolean
+
+  /**
+   * name of the audio source file currently playing
+   * @deprecated Use `currentAudio` instead.
+   */
+  currentlyPlaying: string
 }
 
 /* USECASE : some mobile (tablet) devices doesn't let the navigator play sounds programmatically.

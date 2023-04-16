@@ -3,7 +3,7 @@ import AudiotrackManager from "./AudiotrackManager"
 import type {
   SubtitlesJSON,
   Subtitle,
-  Audio,
+  IAudioItem,
   AudioOptions,
   CaptionState,
   Track,
@@ -16,7 +16,7 @@ export { useAudiotracks, AudiotrackManager }
 export type {
   SubtitlesJSON,
   Subtitle,
-  Audio,
+  IAudioItem,
   AudioOptions,
   CaptionState,
   Track,
