@@ -11,7 +11,11 @@
     "release": "pnpm run build && changeset publish",
     "lint": "tsc"
   },
-  "repository": "https://github.com/AndyLeezard/react-audio-tracks",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AndyLeezard/react-audio-tracks.git",
+    "demo": "https://react-audio-tracks.vercel.app"
+  },
   "author": "Andy Lee <a.lee.intl@gmail.com> (https://github.com/AndyLeezard)",
   "bugs": {
     "url": "https://github.com/AndyLeezard/react-audio-tracks/issues"

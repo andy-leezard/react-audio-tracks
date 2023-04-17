@@ -5,6 +5,10 @@
 
 # Demo
 
+-  https://react-audio-tracks.vercel.app/
+
+# Demo source code
+
 - Refer to the [Git repo](https://github.com/AndyLeezard/react-audio-tracks/tree/master/example)
 
 # Example
@@ -123,3 +127,8 @@ pnpm run lint
 pnpm run build
 pnpm changeset init
 ```
+
+# License
+
+React-audio-track is licensed under the MIT License.
+V0.11.0 MIT © 2023 Andy Lee 🔗
