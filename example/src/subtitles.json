@@ -1,0 +1,100 @@
+{
+  "intro": [
+    {
+      "from": 0,
+      "to": 2.795,
+      "narrator": "drummer",
+      "description": {
+        "en": "(Drumsticks sound)",
+        "fr": "(Son des baguettes de tambour)",
+        "ko": "(드럼스틱 소리)"
+      },
+      "text": {
+        "en": "drum intro",
+        "fr": "intro batterie",
+        "ko": "드럼 인트로"
+      }
+    }
+  ],
+  "drumbeat_90bpm": [
+    {
+      "from": 0,
+      "to": 5.333,
+      "narrator": "drummer",
+      "description": {
+        "en": "(Drums sound)",
+        "fr": "(Son de batterie)",
+        "ko": "(드럼스틱 소리)"
+      },
+      "text": {
+        "en": "Drumline1, block 1",
+        "fr": "Morceau de batterie1, bloc 1",
+        "ko": "드럼라인1, 블록1"
+      }
+    },
+    {
+      "from": 0,
+      "to": 10.667,
+      "narrator": "drummer",
+      "description": {
+        "en": "(Drums sound)",
+        "fr": "(Son de batterie)",
+        "ko": "(드럼스틱 소리)"
+      },
+      "text": {
+        "en": "Drumline1, block 2",
+        "fr": "Morceau de batterie1, bloc 2",
+        "ko": "드럼라인1, 블록2"
+      }
+    }
+  ],
+  "drumbeat2_90bpm": [
+    {
+      "from": 0,
+      "to": 5.333,
+      "narrator": "drummer",
+      "description": {
+        "en": "(Drums sound)",
+        "fr": "(Son de batterie)",
+        "ko": "(드럼스틱 소리)"
+      },
+      "text": {
+        "en": "Drumline2, block 1",
+        "fr": "Morceau de batterie2, bloc 1",
+        "ko": "드럼라인2, 블록1"
+      }
+    },
+    {
+      "from": 0,
+      "to": 10.667,
+      "narrator": "drummer",
+      "description": {
+        "en": "(Drums sound)",
+        "fr": "(Son de batterie)",
+        "ko": "(드럼스틱 소리)"
+      },
+      "text": {
+        "en": "Drumline2, block 2",
+        "fr": "Morceau de batterie2, bloc 2",
+        "ko": "드럼라인2, 블록2"
+      }
+    }
+  ],
+  "bass_loop_90bpm_got_to_be_real": [
+    {
+      "from": 0,
+      "to": 10.667,
+      "narrator": "bassist",
+      "description": {
+        "en": "(Bass slapping)",
+        "fr": "(Slap de basse)",
+        "ko": "(베이스 슬랩소리)"
+      },
+      "text": {
+        "en": "Bassline",
+        "fr": "Morceau de bass",
+        "ko": "베이스라인"
+      }
+    }
+  ]
+}

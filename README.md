@@ -3,7 +3,11 @@
 - A light-weight solution to manage audio tracks and captions in front-end web projects.
 - Provides a handy custom react hook.
 
-# example
+# Demo
+
+- Refer to the [Git repo](https://github.com/AndyLeezard/react-audio-tracks/tree/master/example)
+
+# Example
 
 Initialize `AudiotrackManager` class with parameters.
 
@@ -90,7 +94,11 @@ const TestScreen = (props) => {
   }
 
   const stopGuitar = () => {
-    audioRef.current?.forceStop()
+    // will stop the audio and leave it to the garbage collector to clean up.
+    if(audioRef.current){
+      audioRef.current?.purge()
+      audioRef.current = null
+    }
   }
 
   return <></>
