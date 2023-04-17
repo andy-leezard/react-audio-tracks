@@ -1,6 +1,6 @@
 {
   "name": "react-audio-tracks",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "A light-weight solution to manage audio tracks and captions in front-end web projects. Provides a handy custom react hook.",
   "license": "MIT",
   "main": "dist/index.js",
