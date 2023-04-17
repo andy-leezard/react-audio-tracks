@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 0.11.1
+
+### Patch Changes
+
+- 3635c51: add demo website for npm repository
+
 ## 0.11.0
 
 ### Minor Changes
