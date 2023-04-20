@@ -105,6 +105,8 @@ const TestScreen = (props) => {
     }
   }
 
+  const changeGlobalVolume = AudiotrackManager.setGlobalVolume
+
   return <></>
 }
 ```
