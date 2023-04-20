@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 0.11.2
+
+### Patch Changes
+
+- 0a4939d: Improved play latency
+
 ## 0.11.1
 
 ### Patch Changes
