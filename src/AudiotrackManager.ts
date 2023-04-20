@@ -7,12 +7,16 @@ class AudiotrackManager {
   /* MUTABLE CONFIGURATION */
   static #debug: boolean = false
   static #subtitlesJSON: T.SubtitlesJSON = {}
-  static #defaultVolume: number = 0.5
   static #supportedLocales: string[] = ["en"]
   static #fallbackLocale: string = this.#supportedLocales[0]!
   static #defaultAudioOptions: T.AudioOptions = {
     locale: this.#fallbackLocale,
   }
+
+  /**
+   * @deprecated use state.globalVolume instead
+   */
+  static #defaultVolume: number = 0.5
 
   /* STATE */
   static #state: T.AudioManagerState = {
@@ -38,7 +42,7 @@ class AudiotrackManager {
       this.#subtitlesJSON = args.subtitlesJSON
     }
     if (typeof args.defaultVolume === "number") {
-      this.#defaultVolume = args.defaultVolume
+      this.#State = { ...this.#State, globalVolume: args.defaultVolume }
     }
     if (args.fallbackLocale) {
       this.#fallbackLocale = args.fallbackLocale
@@ -61,7 +65,7 @@ class AudiotrackManager {
       }
       this.#defaultAudioOptions = payload
     }
-    /* GRACEFULLY HANDLE REDUCING (DELETING) TRACKS LENGTH */
+    /* TODO : GRACEFULLY HANDLE REDUCING (DELETING) TRACKS LENGTH */
   }
 
   public static initialize(args: T.AudiotrackManagerState) {
@@ -111,7 +115,7 @@ class AudiotrackManager {
   /* - - - - - ABSTRACTION LAYER TO ENSURE SETTER TRIGGER - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  static updateState(value: Partial<T.AudioManagerState>) {
+  public static updateState(value: Partial<T.AudioManagerState>) {
     const prev = this.#State
     this.#State = { ...prev, ...value }
   }
@@ -212,18 +216,13 @@ class AudiotrackManager {
     const audioItem = track.queue[0]
     const audio = audioItem?.audio
     if (!audioItem || !audio) return
-    if (audioItem.loaded) {
-      // prevent registering event listeners multiple times
-      let isPlaying = audio.paused
-      if (audio.paused) {
-        audio.play()
-      } else {
-        audio.pause()
-      }
-      this.updateTrack(index, { isPlaying })
+    let isPlaying = audio.paused
+    if (audio.paused) {
+      audio.play()
     } else {
-      audioItem.play()
+      audio.pause()
     }
+    this.updateTrack(index, { isPlaying })
   }
 
   public static resumeTrack(index: number): boolean {
@@ -232,13 +231,9 @@ class AudiotrackManager {
     const audioItem = track.queue[0]
     const audio = audioItem?.audio
     if (!audioItem || !audio) return false
-    if (audioItem.loaded) {
-      if (audio.paused) {
-        audio.play()
-        this.updateTrack(index, { isPlaying: true })
-      }
-    } else {
-      audioItem.play()
+    if (audio.paused) {
+      audio.play()
+      this.updateTrack(index, { isPlaying: true })
     }
     return true
   }
@@ -349,16 +344,17 @@ class AudiotrackManager {
     }
     const fireOnLoad = () => {
       const promise = audio.play()
-      if (trackIdxIsValid) {
-        this.updateTrack(trackIdx, {
-          isPlaying: true,
-          currentAudio: audioItem,
-          currentlyPlaying: filename,
-        })
-      }
       if (promise !== undefined) {
         promise
-          .then(() => {})
+          .then(() => {
+            if (trackIdxIsValid) {
+              this.updateTrack(trackIdx, {
+                isPlaying: true,
+                currentAudio: audioItem,
+                currentlyPlaying: filename,
+              })
+            }
+          })
           .catch((e) => {
             endingCallback()
             console.error(e)
@@ -370,27 +366,20 @@ class AudiotrackManager {
     }
     const errorHandler = (e: ErrorEvent) => {
       endingCallback()
-      log(
-        `COULD NOT LOAD AUDIO SRC (${src}) : ${JSON.stringify(e)}`,
-        this.#debug,
-        2
-      )
+      log(`COULD NOT LOAD AUDIO SRC (${src})`, this.#debug)
+      log(e, this.#debug, 2)
     }
-    const play = () => {
-      audio.addEventListener("canplaythrough", fireOnLoad)
-      audio.addEventListener("ended", endingCallback)
-      audio.addEventListener("error", errorHandler)
-      audio.addEventListener("timeupdate", update)
-      audio.load()
-    }
+    audio.addEventListener("play", fireOnLoad)
+    audio.addEventListener("ended", endingCallback)
+    audio.addEventListener("error", errorHandler)
+    audio.addEventListener("timeupdate", update)
     const cleanup = () => {
       audio.currentTime = 0
       audio.pause()
-      audio.removeEventListener("canplaythrough", fireOnLoad)
+      audio.removeEventListener("play", fireOnLoad)
       audio.removeEventListener("ended", endingCallback)
       audio.removeEventListener("timeupdate", update)
       audio.removeEventListener("error", errorHandler)
-      audio.remove()
       log(`cleaning up audio: ${filename}`, this.#debug)
       if (trackIdxIsValid) {
         this.clearAudio(uid, filename)
@@ -402,7 +391,7 @@ class AudiotrackManager {
       filename: originalFilename ?? filename,
       audio: audio,
       autoPlay: autoPlay,
-      onPlay: play,
+      onPlay: fireOnLoad,
       onPurge: endingCallback,
     })
     return audioItem

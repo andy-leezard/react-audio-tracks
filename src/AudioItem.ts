@@ -1,9 +1,6 @@
 import { AudioItemConstructor, IAudioItem } from "./types"
 
 class AudioItem implements IAudioItem {
-  // Indicates whether or not the event listeners were registered.
-  // If true: it specifically means that `play` method here has been already called.
-  public loaded = false
   public id = ""
   public filename = ""
   public src = ""
@@ -22,10 +19,7 @@ class AudioItem implements IAudioItem {
   }
 
   public play() {
-    if (!this.loaded) {
-      this.onPlay()
-      this.loaded = true
-    }
+    this.onPlay()
   }
 
   public purge() {

@@ -115,9 +115,13 @@ export type AudioItemConstructor = {
 export interface IAudioItem extends AudioItemConstructor {
   play: () => void
   purge: () => void
-  // Indicates whether or not the event listeners were registered.
-  // If true: it specifically means that `play` method here has been already called.
-  loaded: boolean
+
+  /**
+   * Indicates whether or not the event listeners were registered.
+   * If true: it specifically means that `play` method here has been already called.
+   * @deprecated will always return true now
+   */
+  loaded?: boolean | undefined
 }
 
 export type Track = {
