@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 0.11.4
+
+### Patch Changes
+
+- fbaa424: bugfix- properly process allowDuplicates option
+
 ## 0.11.3
 
 ### Patch Changes
