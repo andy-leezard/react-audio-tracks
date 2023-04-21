@@ -200,7 +200,7 @@ const Ellipsis = styled.span`
 function App() {
   const state = useAudiotracks()
   const [targetTrackIdx, setTargetTrackIdx] = useState(0)
-  const [autoPlay, setAutoPlay] = useState(false)
+  const [autoPlay, setAutoPlay] = useState<"all" | "partial" | "none">("none")
   const [audioUrls, setAudioUrls] = useState<
     Array<
       AudioOptions & {
@@ -260,6 +260,13 @@ function App() {
         state.tracks[0].queue.length ? state.tracks[0].queue[0].filename : "--"
       )
     )
+    setAutoPlay(
+      state.tracks.every((track) => track.autoPlay)
+        ? "all"
+        : state.tracks.every((track) => !track.autoPlay)
+        ? "none"
+        : "partial"
+    )
   }, [state])
 
   const handleFileUpload = useCallback(
@@ -284,10 +291,7 @@ function App() {
   )
 
   const playDemo = (src: string) => {
-    AudiotrackManager.registerAudio(src, {
-      trackIdx: targetTrackIdx,
-      autoPlay: autoPlay || state.tracks[targetTrackIdx]?.autoPlay,
-    })
+    AudiotrackManager.registerAudio(src, { trackIdx: targetTrackIdx })
   }
 
   return (
@@ -306,9 +310,18 @@ function App() {
           <input
             type="checkbox"
             id="checkbox"
-            style={{ width: "1.5rem", height: "1.5rem" }}
-            checked={autoPlay}
-            onChange={(e) => setAutoPlay(e.target.checked)}
+            style={{
+              width: "1.5rem",
+              height: "1.5rem",
+            }}
+            checked={autoPlay === "all"}
+            onChange={(e) => {
+              if (e.target.checked) {
+                AudiotrackManager.updateAllTracks({ autoPlay: true })
+              } else {
+                AudiotrackManager.updateAllTracks({ autoPlay: false })
+              }
+            }}
           />
           <label htmlFor="checkbox">Force Autoplay</label>
         </div>
@@ -598,7 +611,7 @@ function App() {
             marginTop: "0.75rem",
           }}
         >
-          V0.11.0 MIT © 2023{" "}
+          V0.11.3 MIT © 2023{" "}
           <a href="https://github.com/AndyLeezard" target="_blank">
             Andy Lee 🔗
           </a>

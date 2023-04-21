@@ -183,6 +183,50 @@ class AudiotrackManager {
     this.updateState({ tracks: prevTracks })
   }
 
+  public static updateAllTracks(
+    payload: Pick<Partial<T.Track>, "autoPlay" | "loop" | "volume" | "muted">
+  ) {
+    const tracks = this.#State.tracks
+    tracks.forEach((track, idx) => {
+      const { autoPlay, loop, volume, muted } = payload
+      if (typeof autoPlay === "boolean") {
+        track.autoPlay = autoPlay
+        track.queue.forEach((item) => {
+          if (item.audio) {
+            item.autoPlay = autoPlay
+          }
+        })
+        const isPlaying = this.resumeTrack(idx)
+        track.isPlaying = isPlaying
+      }
+      if (typeof loop === "boolean") {
+        track.loop = loop
+        track.queue.forEach((item) => {
+          if (item.audio) {
+            item.audio.loop = loop
+          }
+        })
+      }
+      if (typeof volume === "number") {
+        track.volume = volume
+        track.queue.forEach((item) => {
+          if (item.audio) {
+            item.audio.volume = volume
+          }
+        })
+      }
+      if (typeof muted === "boolean") {
+        track.muted = muted
+        track.queue.forEach((item) => {
+          if (item.audio) {
+            item.audio.muted = muted
+          }
+        })
+      }
+    })
+    this.updateState({ tracks })
+  }
+
   static pushToQueue(trackIdx: number, payload: T.IAudioItem) {
     const track = this.getTrack(trackIdx)
     if (!track) return
@@ -313,9 +357,7 @@ class AudiotrackManager {
     const audio = new Audio(src)
     const uid = Date.now().toString()
     audio.volume = volume
-    if (typeof muted === "boolean") {
-      audio.muted = muted // this.#State.globalMuted
-    }
+    audio.muted = Boolean(muted)
     if (typeof loop === "boolean") {
       audio.loop = loop
     }
@@ -438,7 +480,8 @@ class AudiotrackManager {
         : track.autoPlay
     const audioItem = this.createAudio(src, {
       ..._options,
-      muted: track.muted || this.#State.globalMuted,
+      trackIdx: trackIdx,
+      muted: this.#State.globalMuted || track.muted,
       loop: track.loop,
     } as Required<T.AudioOptions>)
     const queueLength = track.queue.length
@@ -584,7 +627,7 @@ class AudiotrackManager {
     this.updateState({ tracks: tracks, globalVolume: val })
   }
 
-  public static toggleMuteAllSources = (override?: boolean) => {
+  public static toggleGlobalMute = (override?: boolean) => {
     const state =
       typeof override === "boolean" ? override : !this.#State.globalMuted
     const tracks = this.#State.tracks
@@ -596,8 +639,19 @@ class AudiotrackManager {
           }
         })
       }
+      track.muted = state
     })
     this.updateState({ globalMuted: state })
+  }
+
+  public static getCurrentCaption = (trackIdx: number) => {
+    const track = this.getTrack(trackIdx)
+    if (!track) return null
+    if (!track.caption) {
+      console.log(`track#${trackIdx} is not displaying a caption.`)
+      return null
+    }
+    return track.caption
   }
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
