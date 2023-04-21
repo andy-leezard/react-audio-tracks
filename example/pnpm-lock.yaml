@@ -5,8 +5,8 @@ dependencies:
     specifier: ^18.2.0
     version: 18.2.0
   react-audio-tracks:
-    specifier: ^0.11.0
-    version: 0.11.0
+    specifier: ^0.11.3
+    version: 0.11.3
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
@@ -779,8 +779,8 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
-  /react-audio-tracks@0.11.0:
-    resolution: {integrity: sha512-Y57chxRIns8MoSultWzG683sNKdj+6Wa8oaHAgyt2Eti605QribpfNEOsZz0t8aVtIaogr0xifF/CTSLXi1k/A==}
+  /react-audio-tracks@0.11.3:
+    resolution: {integrity: sha512-4bmhmWmkP9J9ApyGPsIxj2CB5Apavb8nSwhvKavqxOuLJxlDjF+6ZY5iHcsTGWqtiDCQC6LmDvFzBl5uIW6DaQ==}
     dependencies:
       react: 18.2.0
     dev: false
