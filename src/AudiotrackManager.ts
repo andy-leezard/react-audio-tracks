@@ -166,8 +166,8 @@ class AudiotrackManager {
         }
       })
     }
-    if (typeof payload.allowDuplicate === "boolean") {
-      track.allowDuplicate = payload.allowDuplicate
+    if (typeof payload.allowDuplicates === "boolean") {
+      track.allowDuplicates = payload.allowDuplicates
     }
     if (typeof payload.isPlaying === "boolean") {
       track.isPlaying = payload.isPlaying
@@ -187,11 +187,14 @@ class AudiotrackManager {
   }
 
   public static updateAllTracks(
-    payload: Pick<Partial<T.Track>, "autoPlay" | "loop" | "volume" | "muted">
+    payload: Pick<
+      Partial<T.Track>,
+      "autoPlay" | "loop" | "volume" | "muted" | "allowDuplicates"
+    >
   ) {
     const tracks = this.#State.tracks
     tracks.forEach((track, idx) => {
-      const { autoPlay, loop, volume, muted } = payload
+      const { autoPlay, loop, volume, muted, allowDuplicates } = payload
       if (typeof autoPlay === "boolean") {
         track.autoPlay = autoPlay
         track.queue.forEach((item) => {
@@ -225,6 +228,9 @@ class AudiotrackManager {
             item.audio.muted = muted
           }
         })
+      }
+      if (typeof allowDuplicates === "boolean") {
+        track.allowDuplicates = allowDuplicates
       }
     })
     this.updateState({ tracks })
@@ -361,7 +367,7 @@ class AudiotrackManager {
     const uid = Date.now().toString()
     audio.volume = volume
     audio.muted = Boolean(muted)
-    if (typeof loop === "boolean") {
+    if (typeof loop === "boolean" && trackIdxIsValid) {
       audio.loop = loop
     }
     audio.setAttribute("id", uid)
@@ -451,7 +457,7 @@ class AudiotrackManager {
     const _options = options
       ? { ...this.#defaultAudioOptions, ...options }
       : this.#defaultAudioOptions
-    const { trackIdx = 0, priority, allowDuplicate } = _options
+    const { trackIdx = 0, priority, allowDuplicates } = _options
     /* const playWithoutRegistering = trackIdx === -1 */
     const track = this.getTrack(trackIdx)
     if (!track) {
@@ -465,7 +471,7 @@ class AudiotrackManager {
       return
     }
     const dup = track.queue.find((s) => s.src === src)
-    if (!allowDuplicate && !track.allowDuplicate && dup) {
+    if (!allowDuplicates && !track.allowDuplicates && dup) {
       log(
         `Audiotrack Manager prevented playing a duplicate audio (${src})`,
         this.#debug,

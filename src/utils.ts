@@ -17,7 +17,7 @@ function populateTracks(length: number, volume = 0.5) {
       muted: false,
       loop: false,
       autoPlay: false,
-      allowDuplicate: false,
+      allowDuplicates: false,
 
       // depreated
       currentlyPlaying: "",

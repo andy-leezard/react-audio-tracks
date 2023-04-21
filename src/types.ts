@@ -114,7 +114,7 @@ export type AudioOptions = {
    *
    *  Default: `false`
    */
-  allowDuplicate?: boolean
+  allowDuplicates?: boolean
 
   /**
    * Optional : playing priority order (index)
@@ -238,7 +238,7 @@ export type Track = {
    *
    *  Defulat: `false`
    */
-  allowDuplicate: boolean
+  allowDuplicates: boolean
 
   /**
    * name of the audio source file currently playing
