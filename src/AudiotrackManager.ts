@@ -166,6 +166,9 @@ class AudiotrackManager {
         }
       })
     }
+    if (typeof payload.allowDuplicate === "boolean") {
+      track.allowDuplicate = payload.allowDuplicate
+    }
     if (typeof payload.isPlaying === "boolean") {
       track.isPlaying = payload.isPlaying
     }
@@ -462,7 +465,7 @@ class AudiotrackManager {
       return
     }
     const dup = track.queue.find((s) => s.src === src)
-    if (!allowDuplicate && dup) {
+    if (!allowDuplicate && !track.allowDuplicate && dup) {
       log(
         `Audiotrack Manager prevented playing a duplicate audio (${src})`,
         this.#debug,
