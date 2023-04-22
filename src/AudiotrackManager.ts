@@ -77,7 +77,7 @@ class AudiotrackManager {
       args.number_of_tracks > this.#State.tracks.length
     ) {
       this.purgeAllTracks()
-      this.updateState({
+      this.#updateState({
         tracks: U.populateTracks(args.number_of_tracks, this.#defaultVolume),
       })
     }
@@ -115,9 +115,15 @@ class AudiotrackManager {
   /* - - - - - ABSTRACTION LAYER TO ENSURE SETTER TRIGGER - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  public static updateState(value: Partial<T.AudioManagerState>) {
+  static #updateState(value: Partial<T.AudioManagerState>) {
     const prev = this.#State
     this.#State = { ...prev, ...value }
+  }
+
+  static updateState(
+    value: Omit<Partial<T.AudioManagerState>, "tracks" | "playRequests">
+  ) {
+    this.#updateState(value)
   }
 
   static getTrack(index: number): T.Track | null {
@@ -183,7 +189,7 @@ class AudiotrackManager {
     }
     const prevTracks = this.#State.tracks
     prevTracks[index] = track
-    this.updateState({ tracks: prevTracks })
+    this.#updateState({ tracks: prevTracks })
   }
 
   public static updateAllTracks(
@@ -233,7 +239,7 @@ class AudiotrackManager {
         track.allowDuplicates = allowDuplicates
       }
     })
-    this.updateState({ tracks })
+    this.#updateState({ tracks })
   }
 
   static pushToQueue(trackIdx: number, payload: T.IAudioItem) {
@@ -242,7 +248,7 @@ class AudiotrackManager {
     track.queue.push(payload)
     const prevTracks = this.#State.tracks
     prevTracks[trackIdx] = track
-    this.updateState({ tracks: prevTracks })
+    this.#updateState({ tracks: prevTracks })
   }
 
   static injectToQueue(
@@ -260,7 +266,7 @@ class AudiotrackManager {
     ]
     const prevTracks = this.#State.tracks
     prevTracks[trackIdx] = track
-    this.updateState({ tracks: prevTracks })
+    this.#updateState({ tracks: prevTracks })
   }
 
   public static togglePlayTrack(index: number) {
@@ -338,7 +344,7 @@ class AudiotrackManager {
       payload.push(new_message)
     }
     const prev = this.#State.playRequests
-    this.updateState({ playRequests: [...prev, ...payload] })
+    this.#updateState({ playRequests: [...prev, ...payload] })
   }
 
   private static createAudio = (
@@ -622,35 +628,35 @@ class AudiotrackManager {
     }
   }
 
-  public static setGlobalVolume = (val: number) => {
-    log(`new global volume : ${val}`, this.#debug)
+  public static setGlobalVolume = (globalVolume: number) => {
+    log(`new global volume : ${globalVolume}`, this.#debug)
     const tracks = this.#State.tracks
     tracks.forEach((track) => {
-      track.volume = val
+      track.volume = globalVolume
       track.queue.forEach((item) => {
         if (item.audio) {
-          item.audio.volume = val
+          item.audio.volume = globalVolume
         }
       })
     })
-    this.updateState({ tracks: tracks, globalVolume: val })
+    this.#updateState({ tracks, globalVolume })
   }
 
   public static toggleGlobalMute = (override?: boolean) => {
-    const state =
+    const globalMuted =
       typeof override === "boolean" ? override : !this.#State.globalMuted
     const tracks = this.#State.tracks
     tracks.forEach((track) => {
       if (!track.muted) {
         track.queue.forEach((item) => {
           if (item.audio) {
-            item.audio.muted = state
+            item.audio.muted = globalMuted
           }
         })
       }
-      track.muted = state
+      track.muted = globalMuted
     })
-    this.updateState({ globalMuted: state })
+    this.#updateState({ globalMuted, tracks })
   }
 
   public static getCurrentCaption = (trackIdx: number) => {
@@ -673,7 +679,7 @@ class AudiotrackManager {
   ) => {
     if (this.#State.conferenceVolumes[pid]) return
     const volumes = this.#State.conferenceVolumes
-    this.updateState({
+    this.#updateState({
       conferenceVolumes: {
         ...volumes,
         [pid]: {
@@ -700,7 +706,7 @@ class AudiotrackManager {
     if (typeof muted === "boolean") {
       prev[pid]!.muted = muted
     }
-    this.updateState({ conferenceVolumes: prev })
+    this.#updateState({ conferenceVolumes: prev })
   }
 }
 
