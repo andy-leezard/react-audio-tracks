@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 0.11.5
+
+### Patch Changes
+
+- e8b6e91: 1. Some of the `updateState` method parameters are limited for runtime safety reasons. 2.bugfix: tracks `muted` property wasn't visually updated when `globalMuted` is updated.`
+
 ## 0.11.4
 
 ### Patch Changes
