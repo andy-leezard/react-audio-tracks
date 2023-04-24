@@ -1,4 +1,3 @@
-
 import styled, { keyframes } from "styled-components"
 
 export const Wrapper = styled.div`
@@ -165,4 +164,11 @@ export const Ellipsis = styled.span`
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+`
+
+export const CheckboxContainer = styled.div`
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 `

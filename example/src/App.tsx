@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react"
-import AudiotrackManager, { useAudiotracks } from "react-audio-tracks"
 import subtitles from "./subtitles.json"
 import { GiDrumKit, GiGuitarBassHead, GiChopsticks } from "react-icons/gi"
 import { getURLParam } from "./utils"
 import * as UI from "./UI"
 import TrackInterface from "./TrackInterface"
 import CaptionViewer from "./CaptionViewer"
+import AudiotrackManager, { useAudiotracks } from "."
+import Checkbox from "./Checkbox"
 
 const NUMBER_OF_TRACKS = 3
 
@@ -16,6 +17,7 @@ function App() {
   const state = useAudiotracks()
   const [targetTrackIdx, setTargetTrackIdx] = useState(0)
   const [globalAutoPlay, setGlobalAutoPlay] = useState(false)
+  const [globalLoop, setGlobalLoop] = useState(false)
   const [globalAllowDuplicates, setGlobalAllowDuplicates] = useState(false)
 
   useEffect(() => {
@@ -54,7 +56,7 @@ function App() {
       fallbackLocale: "en",
       supportedLocales: ["en", "fr", "ko"],
     })
-    AudiotrackManager.updateAllTracks({ allowDuplicates: true })
+    AudiotrackManager.updateAllTracks({ autoPlay: true, allowDuplicates: true })
   }, [])
 
   useEffect(() => {
@@ -70,6 +72,10 @@ function App() {
     )
     if (globalAllowDuplicates !== _globalAllowDuplicates) {
       setGlobalAllowDuplicates(_globalAllowDuplicates)
+    }
+    const _globalLoop = state.tracks.every((track) => track.loop)
+    if (globalLoop !== _globalLoop) {
+      setGlobalLoop(_globalLoop)
     }
     console.log(state)
   }, [state])
@@ -88,108 +94,33 @@ function App() {
       <UI.Container>
         <UI.Title>React-Audio-Tracks Controller</UI.Title>
         <div style={{ display: "flex", alignSelf: "center", gap: "1rem" }}>
-          <div
-            style={{
-              marginBottom: "1rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="checkbox"
-              style={{
-                width: "1.5rem",
-                height: "1.5rem",
-              }}
-              checked={globalAutoPlay}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  AudiotrackManager.updateAllTracks({ autoPlay: true })
-                } else {
-                  AudiotrackManager.updateAllTracks({ autoPlay: false })
-                }
-              }}
-            />
-            <label htmlFor="checkbox">Force Autoplay</label>
-          </div>
-          <div
-            style={{
-              marginBottom: "1rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="checkbox"
-              style={{
-                width: "1.5rem",
-                height: "1.5rem",
-              }}
-              checked={state.globalMuted}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  AudiotrackManager.toggleGlobalMute(true)
-                } else {
-                  AudiotrackManager.toggleGlobalMute(false)
-                }
-              }}
-            />
-            <label htmlFor="checkbox">Global Muted</label>
-          </div>
-          <div
-            style={{
-              alignSelf: "center",
-              marginBottom: "1rem",
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            <input
-              type="checkbox"
-              id="checkbox"
-              style={{
-                width: "1.5rem",
-                height: "1.5rem",
-              }}
-              checked={globalAllowDuplicates}
-              onChange={(e) => {
-                if (e.target.checked) {
-                  AudiotrackManager.updateAllTracks({ allowDuplicates: true })
-                } else {
-                  AudiotrackManager.updateAllTracks({ allowDuplicates: false })
-                }
-              }}
-            />
-            <label htmlFor="checkbox">Allow Duplicates</label>
-          </div>
+          <Checkbox
+            checked={globalAutoPlay}
+            label={"Auto Play"}
+            onChange={(checked) =>
+              AudiotrackManager.updateAllTracks({ autoPlay: checked })
+            }
+          />
+          <Checkbox
+            checked={state.globalMuted}
+            label={"Global Muted"}
+            onChange={AudiotrackManager.toggleGlobalMute}
+          />
+          <Checkbox
+            checked={globalLoop}
+            label={"Global Loop"}
+            onChange={(checked) =>
+              AudiotrackManager.updateAllTracks({ loop: checked })
+            }
+          />
+          <Checkbox
+            checked={globalAllowDuplicates}
+            label={"Allow Duplicates"}
+            onChange={(checked) =>
+              AudiotrackManager.updateAllTracks({ allowDuplicates: checked })
+            }
+          />
         </div>
-        <select
-          name="track #"
-          id="track-select"
-          style={{
-            width: "min-width",
-            alignSelf: "center",
-            marginBottom: "1rem",
-          }}
-          onChange={(e) =>
-            setTargetTrackIdx(
-              isNaN(Number(e.target.value)) ? 0 : Number(e.target.value)
-            )
-          }
-        >
-          {state.tracks.map((track, idx) => {
-            return (
-              <option value={`${idx}`} key={`option-${track.id}`}>
-                Track #{idx}
-              </option>
-            )
-          })}
-        </select>
         <div style={{ display: "flex", alignSelf: "center", gap: "1rem" }}>
           <div
             style={{
@@ -214,6 +145,27 @@ function App() {
           </div>
         </div>
         <UI.Title>Demo Inputs</UI.Title>
+        <select
+          name="track #"
+          id="track-select"
+          style={{
+            width: "min-width",
+            alignSelf: "center",
+          }}
+          onChange={(e) =>
+            setTargetTrackIdx(
+              isNaN(Number(e.target.value)) ? 0 : Number(e.target.value)
+            )
+          }
+        >
+          {state.tracks.map((track, idx) => {
+            return (
+              <option value={`${idx}`} key={`option-${track.id}`}>
+                Track #{idx}
+              </option>
+            )
+          })}
+        </select>
         <div
           style={{
             display: "flex",
