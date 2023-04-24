@@ -1,26 +1,36 @@
-import useAudiotracks from "./src/useAudiotracks"
-import AudiotrackManager from "./src/AudiotrackManager"
+import AudiotrackManager, { useAudiotracks, useTrackStream } from "./src"
 import type {
   SubtitlesJSON,
   Subtitle,
-  IAudioItem,
+  AudioCallbacks,
   AudioOptions,
   CaptionState,
-  Track,
+  PlayRequestConstructor,
   PlayRequest,
   AudioManagerState,
-  AudiotrackManagerState,
-} from "./src/types"
+  AudiotrackManagerSettings,
+  MutTrackState,
+  TrackState,
+  AudioItemState,
+  InnerAudioState,
+  TrackStream,
+} from "./src"
 
-export { useAudiotracks, AudiotrackManager }
+export default AudiotrackManager
+export { useAudiotracks, useTrackStream }
 export type {
   SubtitlesJSON,
   Subtitle,
-  IAudioItem,
+  AudioCallbacks,
   AudioOptions,
   CaptionState,
-  Track,
+  PlayRequestConstructor,
   PlayRequest,
   AudioManagerState,
-  AudiotrackManagerState,
+  AudiotrackManagerSettings,
+  MutTrackState,
+  TrackState,
+  AudioItemState,
+  InnerAudioState,
+  TrackStream,
 }

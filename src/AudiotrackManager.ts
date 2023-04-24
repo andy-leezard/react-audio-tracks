@@ -1,7 +1,7 @@
-import * as U from "./utils"
 import * as C from "./constants"
+import * as U from "./utils"
+import Track from "./Track"
 import type * as T from "./types"
-import AudioItem from "./AudioItem"
 
 class AudiotrackManager {
   /* MUTABLE CONFIGURATION */
@@ -9,20 +9,17 @@ class AudiotrackManager {
   static #subtitlesJSON: T.SubtitlesJSON = {}
   static #supportedLocales: string[] = ["en"]
   static #fallbackLocale: string = this.#supportedLocales[0]!
-  static #defaultAudioOptions: T.AudioOptions = {
+  static #defaultAudioOptions: T.AudioOptions & { trackIdx?: number } = {
     locale: this.#fallbackLocale,
+    trackIdx: 0,
   }
-
-  /**
-   * @deprecated use state.globalVolume instead
-   */
-  static #defaultVolume: number = 0.5
+  static #tracks: Track[] = this.#populateTracks(C.DEFAULT_NUMBER_OF_TRACKS)
 
   /* STATE */
   static #state: T.AudioManagerState = {
-    tracks: U.populateTracks(C.DEFAULT_NUMBER_OF_TRACKS),
+    tracks: this.#tracks.map((track) => track.getState()),
     playRequests: [],
-    globalVolume: C.DEFAULT_VOLUME,
+    masterVolume: C.DEFAULT_VOLUME,
     globalMuted: false,
     jitsiIsMuted: false,
     conferenceVolumes: {},
@@ -34,15 +31,30 @@ class AudiotrackManager {
   /* - - - - - - - - - - - - - CONFIG - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  public static setConfiguration(args: T.AudiotrackManagerState) {
+  /**
+   * @param args will update the `AudiotrackManager` class.
+   * @param initialize will force-update every tracks' corresponding properties of the `args`.
+   */
+  public static setConfiguration(
+    args: T.AudiotrackManagerSettings,
+    initialize = false
+  ) {
     if (typeof args.debug === "boolean") {
       this.#debug = args.debug
+      this.#Tracks.forEach((track) =>
+        track.injectSubtitles(this.#subtitlesJSON)
+      )
     }
     if (args.subtitlesJSON) {
       this.#subtitlesJSON = args.subtitlesJSON
+      if (initialize) {
+        this.#Tracks.forEach((track) =>
+          track.injectSubtitles(this.#subtitlesJSON)
+        )
+      }
     }
-    if (typeof args.defaultVolume === "number") {
-      this.#State = { ...this.#State, globalVolume: args.defaultVolume }
+    if (typeof args.masterVolume === "number") {
+      this.#State = { ...this.#State, masterVolume: args.masterVolume }
     }
     if (args.fallbackLocale) {
       this.#fallbackLocale = args.fallbackLocale
@@ -64,23 +76,44 @@ class AudiotrackManager {
         payload.locale = _locale
       }
       this.#defaultAudioOptions = payload
+      if (initialize) {
+        this.#Tracks.forEach((track) => (track.defaultAudioOptions = payload))
+      }
     }
     /* TODO : GRACEFULLY HANDLE REDUCING (DELETING) TRACKS LENGTH */
   }
 
-  public static initialize(args: T.AudiotrackManagerState) {
-    const { number_of_tracks, ...rest } = args
-    this.setConfiguration(rest)
+  /**
+   * (RECOMMENDED) Call this method once when your web app launches with desired settings.
+   *
+   * @param args will be referenced to initialize `AudiotrackManager` class.
+   */
+  public static initialize(args: T.AudiotrackManagerSettings) {
+    const { trackLength, ...rest } = args
     /* CANNOT REDUCE TRACK NUMBERS WITH THIS METHOD */
-    if (
-      args.number_of_tracks &&
-      args.number_of_tracks > this.#State.tracks.length
-    ) {
+    if (args.trackLength && args.trackLength > this.#Tracks.length) {
       this.purgeAllTracks()
-      this.#updateState({
-        tracks: U.populateTracks(args.number_of_tracks, this.#defaultVolume),
-      })
+      this.#Tracks = this.#populateTracks(args.trackLength)
     }
+    this.setConfiguration(rest, true)
+  }
+
+  static #populateTracks(length: number) {
+    return Array.from({ length: length }).map(
+      (_, i) =>
+        new Track({
+          debug: this.#debug,
+          index: i,
+          getInheritedAudioOptions: () => this.#defaultAudioOptions,
+          updateTrackCallback: (trackState: T.TrackState) => {
+            this.#updateTrackState(i, trackState)
+          },
+        })
+    )
+  }
+
+  static getDefaultAudioOptions() {
+    return this.#defaultAudioOptions
   }
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
@@ -100,6 +133,16 @@ class AudiotrackManager {
     this.emit()
   }
 
+  static get #Tracks(): Track[] {
+    return this.#tracks
+  }
+
+  static set #Tracks(value: Track[]) {
+    this.#tracks = value
+    console.log(`tracks are ${value}`)
+    this.#updateState({ tracks: this.#tracks.map((track) => track.getState()) })
+  }
+
   static onStateChange(listener: T.Listener<T.AudioManagerState>): () => void {
     this.state_listeners.push(listener)
     return () => {
@@ -115,218 +158,152 @@ class AudiotrackManager {
   /* - - - - - ABSTRACTION LAYER TO ENSURE SETTER TRIGGER - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  static #updateState(value: Partial<T.AudioManagerState>) {
+  static #updateState(value?: Partial<T.AudioManagerState>) {
     const prev = this.#State
-    this.#State = { ...prev, ...value }
+    const newState = { ...prev, ...value }
+    this.#State = newState
   }
 
+  /**
+   * Updates the state of the `AudiotrackManager` class.
+   * The change will be directly emitted via `useAudiotracks` hooks.
+   */
   static updateState(
     value: Omit<Partial<T.AudioManagerState>, "tracks" | "playRequests">
   ) {
     this.#updateState(value)
   }
 
-  static getTrack(index: number): T.Track | null {
+  /**
+   * @returns a `Track` class instance of the corresponding track.
+   */
+  static getTrack(index: number): Track | null {
+    if (!this.#Tracks.length) return null
+    if (index < 0 && index >= this.#Tracks.length) return null
+    return this.#Tracks[index]!
+  }
+
+  /**
+   * @returns current state of the `Track` class instance of the corresponding track.
+   */
+  static getTrackState(index: number): T.TrackState | null {
     if (!this.#State.tracks.length) return null
-    if (index < 0 && index >= this.#State.tracks.length) return null
+    if (index < 0 && index >= this.#Tracks.length) return null
     return this.#State.tracks[index]!
   }
 
-  static updateTrack(index: number, payload: Partial<T.Track>) {
-    const track = this.getTrack(index)
-    if (!track) return
-    if (payload.queue) {
-      track.queue = payload.queue
-    }
-    if (typeof payload.autoPlay === "boolean") {
-      track.autoPlay = payload.autoPlay
-      track.queue.forEach((item, idx) => {
-        if (item.audio) {
-          item.autoPlay = track.autoPlay
-        }
-      })
-      const isPlaying = this.resumeTrack(index)
-      track.isPlaying = isPlaying
-    }
-    if (typeof payload.muted === "boolean") {
-      track.muted = payload.muted
-      track.queue.forEach((item) => {
-        if (item.audio) {
-          item.audio.muted = track.muted
-        }
-      })
-    }
-    if (typeof payload.volume === "number") {
-      track.volume = payload.volume
-      track.queue.forEach((item) => {
-        if (item.audio) {
-          item.audio.volume = track.volume
-        }
-      })
-    }
-    if (typeof payload.loop === "boolean") {
-      track.loop = payload.loop
-      track.queue.forEach((item) => {
-        if (item.audio) {
-          item.audio.loop = track.loop
-        }
-      })
-    }
-    if (typeof payload.allowDuplicates === "boolean") {
-      track.allowDuplicates = payload.allowDuplicates
-    }
-    if (typeof payload.isPlaying === "boolean") {
-      track.isPlaying = payload.isPlaying
-    }
-    if (Object.prototype.hasOwnProperty.call(payload, "currentAudio")) {
-      track.currentAudio = payload.currentAudio ?? null
-    }
-    if (typeof payload.currentlyPlaying === "string") {
-      track.currentlyPlaying = payload.currentlyPlaying
-    }
-    if (Object.prototype.hasOwnProperty.call(payload, "caption")) {
-      track.caption = payload.caption
-    }
-    const prevTracks = this.#State.tracks
-    prevTracks[index] = track
-    this.#updateState({ tracks: prevTracks })
+  /**
+   * @returns all existing `Track` class instances
+   */
+  static getAllTracks = () => {
+    return this.#Tracks
   }
 
-  public static updateAllTracks(
-    payload: Pick<
-      Partial<T.Track>,
-      "autoPlay" | "loop" | "volume" | "muted" | "allowDuplicates"
-    >
-  ) {
+  /**
+   * updates a track's mutable state properties
+   */
+  static updateTrack(index: number, payload: Partial<T.MutTrackState>) {
+    const track = this.getTrack(index)
+    if (!track) return
+    track.updateState(payload)
+  }
+
+  static #updateTrackState(index: number, payload: Partial<T.TrackState>) {
     const tracks = this.#State.tracks
-    tracks.forEach((track, idx) => {
-      const { autoPlay, loop, volume, muted, allowDuplicates } = payload
-      if (typeof autoPlay === "boolean") {
-        track.autoPlay = autoPlay
-        track.queue.forEach((item) => {
-          if (item.audio) {
-            item.autoPlay = autoPlay
-          }
-        })
-        const isPlaying = this.resumeTrack(idx)
-        track.isPlaying = isPlaying
-      }
-      if (typeof loop === "boolean") {
-        track.loop = loop
-        track.queue.forEach((item) => {
-          if (item.audio) {
-            item.audio.loop = loop
-          }
-        })
-      }
-      if (typeof volume === "number") {
-        track.volume = volume
-        track.queue.forEach((item) => {
-          if (item.audio) {
-            item.audio.volume = volume
-          }
-        })
-      }
-      if (typeof muted === "boolean") {
-        track.muted = muted
-        track.queue.forEach((item) => {
-          if (item.audio) {
-            item.audio.muted = muted
-          }
-        })
-      }
-      if (typeof allowDuplicates === "boolean") {
-        track.allowDuplicates = allowDuplicates
-      }
-    })
+    Object.assign(tracks[index]!, payload)
     this.#updateState({ tracks })
   }
 
-  static pushToQueue(trackIdx: number, payload: T.IAudioItem) {
-    const track = this.getTrack(trackIdx)
-    if (!track) return
-    track.queue.push(payload)
-    const prevTracks = this.#State.tracks
-    prevTracks[trackIdx] = track
-    this.#updateState({ tracks: prevTracks })
+  /**
+   * updates every track's mutable state properties
+   */
+  public static updateAllTracks(payload: Partial<T.MutTrackState>) {
+    const { muted } = payload
+    if (typeof muted === "boolean") {
+      this.#updateState({ globalMuted: muted })
+    }
+    const tracks = this.#Tracks
+    tracks.forEach((track) => {
+      track.updateState(payload)
+    })
+    this.#updateState({ tracks: tracks.map((track) => track.getState()) })
   }
 
-  static injectToQueue(
-    trackIdx: number,
-    splicingIndex: number,
-    payload: T.IAudioItem
-  ) {
-    const track = this.getTrack(trackIdx)
-    if (!track) return
-    const queueLength = track.queue.length
-    track.queue = [
-      ...track.queue.slice(0, splicingIndex),
-      payload,
-      ...track.queue.slice(splicingIndex, queueLength),
-    ]
-    const prevTracks = this.#State.tracks
-    prevTracks[trackIdx] = track
-    this.#updateState({ tracks: prevTracks })
-  }
-
+  /**
+   * Will pause a track if it's playing, otherwise it will resume it.
+   */
   public static togglePlayTrack(index: number) {
     const track = this.getTrack(index)
-    if (!track?.queue.length) return
-    const audioItem = track.queue[0]
-    const audio = audioItem?.audio
-    if (!audioItem || !audio) return
-    let isPlaying = audio.paused
-    if (audio.paused) {
-      audio.play()
-    } else {
-      audio.pause()
-    }
-    this.updateTrack(index, { isPlaying })
+    if (!track) return
+    track.togglePlay()
   }
 
-  public static resumeTrack(index: number): boolean {
+  /**
+   * Will resume a track only if it has a currently playing audio that has been paused.
+   */
+  public static resumeTrack(index: number) {
     const track = this.getTrack(index)
-    if (!track?.queue.length) return false
-    const audioItem = track.queue[0]
-    const audio = audioItem?.audio
-    if (!audioItem || !audio) return false
-    if (audio.paused) {
-      audio.play()
-      this.updateTrack(index, { isPlaying: true })
-    }
-    return true
+    if (!track) return
+    track.resumeTrack()
   }
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
   /* - - - - - - - - - - - - - - CORE - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
+  /**
+   * Removes every audio registered in the queue and ends any currently playing audio.
+   */
   public static purgeTrack(trackIdx: number) {
     const track = this.getTrack(trackIdx)
-    if (!track?.queue.length) return
-    let queue = track.queue
-    if (queue.length) {
-      const currentlyPlaying = queue[0]!
-      queue = queue.slice(0, 1)
-      currentlyPlaying.purge()
-    }
-    this.updateTrack(trackIdx, { queue })
+    if (!track) return
+    track.purgeTrack()
   }
 
+  /**
+   * For every track, removes every audio registered in the queue and ends any currently playing audio.
+   */
   private static purgeAllTracks() {
-    this.#State.tracks.forEach((track, idx) => {
-      this.purgeTrack(idx)
+    this.#Tracks.forEach((track) => {
+      track.purgeTrack()
     })
   }
 
-  static registerPlayRequests = (args: Array<Omit<T.PlayRequest, "id">>) => {
+  /**
+   * This method stores audio sources (with or without `options`) to insert them later on the queue when user interacts with UI elements.
+   *
+   * Use cases : Some mobile (tablet) devices doesn't let the navigator play sounds programmatically unless the user has interacted with it (such as click events).
+   *
+   * This is a workaround to add a step before automatically registering the audio on the queue.
+   *
+   * The `metadata` options can provide an additional context to pop up a modal dialog asking if the user wants to play the sound or not.
+   *
+   * @returns {Array<string>} uids of the created requests that can be used to dismiss each item later by using `AudiotrackManager.dismissPlayRequest` method.
+   */
+  static registerPlayRequests = (
+    args: Array<T.PlayRequestConstructor>
+  ): string[] => {
+    if (!args.length) return []
     const payload: T.PlayRequest[] = []
+    const uids: string[] = []
     for (let i = 0; i < args.length; i++) {
       const arg = args[i]!
+      const trackState = this.getTrackState(arg.trackIdx)
+      if (!trackState) {
+        U.log(
+          `Audiotrack Manager prevented registering a play request (${arg.src}) - track index (${arg.trackIdx}) out of range`,
+          this.#debug
+        )
+        continue
+      }
       const dup = this.#State.playRequests.find((vm) => vm.src === arg.src)
-      if (dup) {
-        log(
-          `Audiotrack Manager prevented playing a duplicate audio (${arg.src})`,
+      const allowDuplicates =
+        this.#defaultAudioOptions.allowDuplicates ||
+        trackState.allowDuplicates ||
+        Boolean(arg.audioOptions?.allowDuplicates)
+      if (dup && !allowDuplicates) {
+        U.log(
+          `Audiotrack Manager prevented registering a duplicate audio play request (${arg.src})`,
           this.#debug,
           1
         )
@@ -337,342 +314,188 @@ class AudiotrackManager {
         id: uid,
         src: arg.src,
         trackIdx: arg.trackIdx,
+        onAccept: () =>
+          this.registerAudio(arg.src, {
+            ...arg?.audioOptions,
+            trackIdx: arg.trackIdx,
+          }),
+        onReject: () => this.dismissPlayRequest(uid),
       }
-      if (arg.options) {
-        new_message.options = arg.options
-      }
+      uids.push(uid)
       payload.push(new_message)
     }
     const prev = this.#State.playRequests
     this.#updateState({ playRequests: [...prev, ...payload] })
+    return uids
   }
 
-  private static createAudio = (
+  /**
+   * Removes a play request if exists
+   */
+  static dismissPlayRequest = (id: string) => {
+    const exists = this.#State.playRequests.find((pr) => pr.id === id)
+    if (!exists) return
+    const playRequests = this.#State.playRequests.filter((pr) => pr.id !== id)
+    this.#updateState({ playRequests })
+  }
+
+  /**
+   * Registeres an audio source to a `Track`'s queue to be played.
+   *
+   * By default, options inherit from the `Track`'s settings and then completes itself with `AudiotrackManager`'s settings.
+   * Refer to those or modify those if needed by using `Track.defaultAudioOptions` or `AudiotrackManager.getDefaultAudioOptions`.
+   *
+   * `AudiotrackManager`'s default `AudioOptions` can be set at the initializing phase by using `AudiotrackManager.initialize(...args)`
+   *
+   * Specify the `trackIdx` to target a specific `Track` to play the audio on. If it's not provided, this option inherits from `AudiotrackManager`'s settings (0 by default).
+   *
+   * If the `Track` has its property `autoPlay` set to `true`, which is recommended, the audio source will be played automatically.
+   * If there are already other audio sources registered or being played, it will be played right after those audios have finished playing.
+   * Otherwise, the audio source will be played on demand.
+   *
+   * if the option `priority` is given, it will override the new audio's index position in the `Track`'s `queue`, therefore `0` being the top priority and skipping the current audio.
+   *
+   * If the `Track` has its property `allowDuplicates` set tot `true`, a duplicate audio source can be registered on the `Track`'s queue at the same time.
+   *
+   * For more and subtitles related information, see the documentation of the type `AudioOptions`.
+   *
+   */
+  public static registerAudio = (
     src: string,
-    audioOptions: T.PartiallyRequired<T.AudioOptions, "volume" | "trackIdx"> & {
-      muted?: boolean
-      loop?: boolean
-    }
+    options?: T.AudioCallbacks &
+      T.AudioOptions & {
+        trackIdx?: number
+      }
   ) => {
-    const filename = U.getFileName(src)
-    const {
-      trackIdx,
-      volume,
-      loop,
-      muted,
-      locale,
-      keyForSubtitles,
-      autoPlay,
-      subtitles,
-      originalFilename,
-      onStart,
-      onEnd,
-    } = audioOptions
-    const trackIdxIsValid = trackIdx >= 0
-    const audio = new Audio(src)
-    const uid = Date.now().toString()
-    audio.volume = volume
-    audio.muted = Boolean(muted)
-    if (typeof loop === "boolean" && trackIdxIsValid) {
-      audio.loop = loop
+    let { trackIdx, ...rest } = options ?? {}
+    if (typeof trackIdx !== "number") {
+      trackIdx =
+        typeof this.#defaultAudioOptions.trackIdx === "number"
+          ? this.#defaultAudioOptions.trackIdx
+          : 0
     }
-    audio.setAttribute("id", uid)
-    let _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
-    let _subtitles: null | T.Subtitle[] =
-      subtitles ??
-      Object.prototype.hasOwnProperty.call(
-        this.#subtitlesJSON,
-        _keyForSubtitles
-      )
-        ? this.#subtitlesJSON[_keyForSubtitles]!
-        : null
-    let _locale = locale ?? this.#fallbackLocale
-    const update = (e: Event) => {
-      if (!_subtitles || !trackIdxIsValid) return
-      this.updateTrack(trackIdx, {
-        caption: U.getCurrentCaption(_subtitles, audio.currentTime, _locale),
-      })
-    }
-    const endingCallback = () => {
-      if (onEnd) {
-        onEnd()
-      }
-      cleanup()
-    }
-    const fireOnLoad = () => {
-      const promise = audio.play()
-      if (promise !== undefined) {
-        promise
-          .then(() => {
-            if (trackIdxIsValid) {
-              this.updateTrack(trackIdx, {
-                isPlaying: true,
-                currentAudio: audioItem,
-                currentlyPlaying: filename,
-              })
-            }
-          })
-          .catch((e) => {
-            endingCallback()
-            console.error(e)
-          })
-      }
-      if (onStart) {
-        onStart()
-      }
-    }
-    const errorHandler = (e: ErrorEvent) => {
-      endingCallback()
-      log(`COULD NOT LOAD AUDIO SRC (${src})`, this.#debug)
-      log(e, this.#debug, 2)
-    }
-    audio.addEventListener("play", fireOnLoad)
-    audio.addEventListener("ended", endingCallback)
-    audio.addEventListener("error", errorHandler)
-    audio.addEventListener("timeupdate", update)
-    const cleanup = () => {
-      audio.currentTime = 0
-      audio.pause()
-      audio.removeEventListener("play", fireOnLoad)
-      audio.removeEventListener("ended", endingCallback)
-      audio.removeEventListener("timeupdate", update)
-      audio.removeEventListener("error", errorHandler)
-      log(`cleaning up audio: ${filename}`, this.#debug)
-      if (trackIdxIsValid) {
-        this.clearAudio(uid, filename)
-      }
-    }
-    const audioItem = new AudioItem({
-      id: uid,
-      src: src,
-      filename: originalFilename ?? filename,
-      audio: audio,
-      autoPlay: autoPlay,
-      onPlay: fireOnLoad,
-      onPurge: endingCallback,
-    })
-    return audioItem
-  }
-
-  // UNSAFE: Using -1 as trackIdx lets play the audio without assigning any track's queue.
-  //         By doing so, the audio will only play once and immediately without affecting existing tracks and its queues.
-  //         Doing so also overrides the `loop` value to `false`.
-  //         Playing an audio this way allows overlapping as many times as possible; it's useful for sound effects like notifications.
-  //         For this use case, please use `playAudio` instead of accessing this feature directly from `registerAudio`.
-  public static registerAudio = (src: string, options?: T.AudioOptions) => {
-    const _options = options
-      ? { ...this.#defaultAudioOptions, ...options }
-      : this.#defaultAudioOptions
-    const { trackIdx = 0, priority, allowDuplicates } = _options
     /* const playWithoutRegistering = trackIdx === -1 */
     const track = this.getTrack(trackIdx)
     if (!track) {
-      log(
+      U.log(
         `Audio source (${src}) could not be played - track idx out of range (${trackIdx})/${
-          this.#State.tracks.length - 1
+          this.#Tracks.length - 1
         }`,
         this.#debug,
         2
       )
       return
     }
-    const dup = track.queue.find((s) => s.src === src)
-    if (!allowDuplicates && !track.allowDuplicates && dup) {
-      log(
-        `Audiotrack Manager prevented playing a duplicate audio (${src})`,
-        this.#debug,
-        1
-      )
-      return
-    }
-    _options.volume =
-      typeof options?.volume === "number"
-        ? Math.min(_options.volume!, track.volume, this.#State.globalVolume)
-        : Math.min(track.volume, this.#State.globalVolume)
-    _options.autoPlay =
-      typeof options?.autoPlay === "boolean"
-        ? options?.autoPlay
-        : track.autoPlay
-    const audioItem = this.createAudio(src, {
-      ..._options,
-      trackIdx: trackIdx,
-      muted: this.#State.globalMuted || track.muted,
-      loop: track.loop,
-    } as Required<T.AudioOptions>)
-    const queueLength = track.queue.length
-    if (
-      typeof priority === "number" &&
-      queueLength &&
-      priority >= 0 &&
-      priority < queueLength
-    ) {
-      let _priority = priority
-      let skipCurrent = false
-      if (_priority === 0) {
-        _priority = 1
-        skipCurrent = true
-      }
-      // ANCHOR
-      this.injectToQueue(trackIdx, _priority, audioItem)
-      if (skipCurrent) {
-        this.skipAudio(trackIdx)
-      }
-    } else {
-      this.pushToQueue(trackIdx, audioItem)
-    }
-    if (_options.autoPlay && queueLength <= 0) {
-      audioItem.play()
-    }
+    track.registerAudio(src, rest)
   }
 
-  private static getAudioBySourceName(
-    sourceName: string,
-    method: "match" | "include" = "match"
-  ): T.IAudioItem | null {
-    for (let i = 0; i < this.#State.tracks.length; i++) {
-      for (let j = 0; j < this.#State.tracks[i]!.queue.length; j++) {
-        const queue = this.#State.tracks[i]!.queue!
-        switch (method) {
-          case "include":
-            return queue.find((a) => a.src.includes(sourceName)) ?? null
-          default:
-            return queue.find((a) => a.src === sourceName) ?? null
-        }
-      }
-    }
-    return null
-  }
-
+  /**
+   * Plays once an audio source with or without options and callbacks.
+   *
+   * options inherits from `AudiotrackManager`'s settings.
+   */
   public static playAudio = (
     src: string,
-    options?: Pick<T.AudioOptions, "onStart" | "onEnd" | "volume"> & {
-      muted?: boolean
-      loop?: boolean
-    }
-  ) => {
-    const audioItem = this.createAudio(src, {
-      ...options,
-      trackIdx: -1,
-      volume:
-        typeof options?.volume === "number"
-          ? options.volume
-          : this.#State.globalVolume,
-    })
-    audioItem.play()
-    return audioItem
-  }
-
-  public static skipAudio = (
-    target: number | string = 0,
-    method?: "match" | "include"
-  ) => {
-    if (typeof target === "number") {
-      const track = this.getTrack(target)
-      if (!track?.queue.length) return
-      const currentAudio = track.queue[0]!
-      log(`force stopping : ${currentAudio.src}`, this.#debug)
-      currentAudio.purge()
-    } else if (typeof target === "string") {
-      const currentAudio = this.getAudioBySourceName(target, method)
-      if (currentAudio) {
-        currentAudio.purge()
+    options?: T.AudioCallbacks &
+      Pick<T.AudioOptions, "volume"> & {
+        muted?: boolean
+        loop?: boolean
+      }
+  ): HTMLAudioElement => {
+    const audio = new Audio(src)
+    audio.muted = Boolean(options?.muted)
+    audio.loop = Boolean(options?.loop)
+    audio.volume =
+      typeof options?.volume === "number"
+        ? options.volume
+        : this.#State.masterVolume
+    const onPlay = () => {
+      if (options?.onPlay) {
+        options.onPlay()
       }
     }
+    const onPause = () => {
+      if (options?.onPause) {
+        options.onPause()
+      }
+    }
+    const onUpdate = () => {
+      if (options?.onUpdate) {
+        options.onUpdate()
+      }
+    }
+    const onError = () => {
+      if (options?.onError) {
+        options.onError()
+      }
+    }
+    const onEnd = () => {
+      cleanup()
+      if (options?.onEnd) {
+        options.onEnd()
+      }
+    }
+    const cleanup = () => {
+      audio.removeEventListener("play", onPlay)
+      audio.removeEventListener("pause", onPause)
+      audio.removeEventListener("error", onError)
+      audio.removeEventListener("timeupdate", onUpdate)
+      audio.removeEventListener("ended", onEnd)
+    }
+
+    audio.addEventListener("play", onPlay)
+    audio.addEventListener("pause", onPause)
+    audio.addEventListener("ended", onEnd)
+    audio.addEventListener("error", onError)
+    audio.addEventListener("timeupdate", onUpdate)
+    audio.play()
+    return audio
   }
 
-  private static playNext = (trackIdx: number) => {
+  /**
+   * Skips the currently playing audio on a `Track`
+   */
+  public static skipTrack = (trackIdx: number = 0) => {
     const track = this.getTrack(trackIdx)
-    if (!track?.queue.length) return
-    const next_audio = track.queue[0]!
-    if (next_audio.audio && !next_audio.audio?.currentTime) {
-      log(`play next audio: ${U.getFileName(next_audio.src)}`, this.#debug)
-      next_audio.play()
-    }
+    if (!track) return
+    track.skipAudio()
   }
 
-  private static searchIndexesByUID = (uid: string) => {
-    const tracks = this.#State.tracks
-    for (let i = 0; i < tracks.length; i++) {
-      const track = tracks[i]!
-      for (let j = 0; j < track.queue.length; j++) {
-        const _audio = track.queue[j]!
-        if (_audio.id === uid) {
-          return { trackIdx: i, soundIdx: j }
-        }
-      }
-    }
-    return { trackIdx: -1, soundIdx: -1 }
-  }
-
-  private static clearAudio = (uid: string, filename: string) => {
-    const { trackIdx, soundIdx } = this.searchIndexesByUID(uid)
-    if (trackIdx + soundIdx < 0) {
-      log(
-        `Cannot clear audio for uid: ${uid} (track & queue index not found)`,
-        this.#debug,
-        2
-      )
-      return
-    }
-    this.updateTrack(trackIdx, {
-      queue: U.dropFromArray(this.#State.tracks[trackIdx]!.queue, soundIdx),
-      caption: null,
-      currentAudio: null,
-      isPlaying: false,
-      currentlyPlaying: "",
+  /**
+   * Sets the `masterVolume` property of `AudiotrackManager`'s state.
+   */
+  public static setMasterVolume = (masterVolume: number) => {
+    U.log(`new global volume : ${masterVolume}`, this.#debug)
+    this.#updateState({ masterVolume })
+    this.#Tracks.forEach((track) => {
+      track.applyMasterVolume(masterVolume)
     })
-    log(`clear ${filename}`, this.#debug)
-    const queue = this.#State.tracks[trackIdx]!.queue
-    if (queue.length && queue[0]?.autoPlay) {
-      this.playNext(trackIdx)
-    }
   }
 
-  public static setGlobalVolume = (globalVolume: number) => {
-    log(`new global volume : ${globalVolume}`, this.#debug)
-    const tracks = this.#State.tracks
-    tracks.forEach((track) => {
-      track.volume = globalVolume
-      track.queue.forEach((item) => {
-        if (item.audio) {
-          item.audio.volume = globalVolume
-        }
-      })
-    })
-    this.#updateState({ tracks, globalVolume })
-  }
-
+  /**
+   * toggles `globalMuted` property of `AudiotrackManager`'s state
+   * @param override if given, this value will set the `globalMuted` value.
+   */
   public static toggleGlobalMute = (override?: boolean) => {
     const globalMuted =
       typeof override === "boolean" ? override : !this.#State.globalMuted
-    const tracks = this.#State.tracks
+    const tracks = this.#Tracks
     tracks.forEach((track) => {
-      if (!track.muted) {
-        track.queue.forEach((item) => {
-          if (item.audio) {
-            item.audio.muted = globalMuted
-          }
-        })
-      }
-      track.muted = globalMuted
+      track.updateState({ muted: globalMuted })
     })
-    this.#updateState({ globalMuted, tracks })
-  }
-
-  public static getCurrentCaption = (trackIdx: number) => {
-    const track = this.getTrack(trackIdx)
-    if (!track) return null
-    if (!track.caption) {
-      console.log(`track#${trackIdx} is not displaying a caption.`)
-      return null
-    }
-    return track.caption
+    this.#Tracks = tracks
+    this.#updateState({ globalMuted })
   }
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
-  /* - - - - - - - - - - JITSI RELATED - - - - - - - - - - - - - -  */
+  /* - - - - - - - - - - JITSI PLUGIN - - - - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
+  /**
+   * Plugin for JitsiMeet to store volume and muted state of participants of a video/audio conference.
+   * @param pid `Participant`'s ID used in the conference
+   * @param options Initial volume and muted state
+   */
   public static initializeConferenceRefs = (
     pid: string,
     options?: { volume?: number; muted?: boolean }
@@ -690,6 +513,11 @@ class AudiotrackManager {
     })
   }
 
+  /**
+   * Plugin for JitsiMeet to update volume and muted state of participants of a video/audio conference.
+   * @param pid `Participant`'s ID used in the conference
+   * @param options new volume and muted state
+   */
   public static updateConferenceRefs = (
     pid: string,
     args: { volume?: number; muted?: boolean }
@@ -708,41 +536,6 @@ class AudiotrackManager {
     }
     this.#updateState({ conferenceVolumes: prev })
   }
-}
-
-function log(
-  message: any,
-  debug = false,
-  logLevel: T.ValueOf<typeof C.LOG_LEVEL> = C.LOG_LEVEL.debug,
-  alertErrorOnProduction = false
-) {
-  if (!debug) return
-  let isError = false
-  let println: T.Logger | undefined
-  switch (logLevel) {
-    case C.LOG_LEVEL.error:
-      println = console.error
-      isError = true
-      break
-    case C.LOG_LEVEL.warn:
-      println = console.warn
-      break
-    default:
-      println = console.log
-      break
-  }
-  if (message instanceof Array) {
-    println(...message)
-    return
-  }
-  if (isError && message?.message) {
-    println(message.message)
-    if (alertErrorOnProduction) {
-      alert(message.message)
-    }
-    return
-  }
-  println(message)
 }
 
 export default AudiotrackManager

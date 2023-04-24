@@ -1,11 +1,11 @@
 # Summary
 
 - A light-weight solution to manage audio tracks and captions in front-end web projects.
-- Provides a handy custom react hook.
+- Provides handy custom react hooks to listen to audio tracks' state and captions.
 
 # Demo
 
--  https://react-audio-tracks.vercel.app/
+- https://react-audio-tracks.vercel.app/
 
 # Demo source code
 
@@ -22,8 +22,8 @@ import Subtitles from "./Subtitles.json"
 AudiotrackManager.initialize({
   debug: true,
   subtitlesJSON: Subtitles,
-  number_of_tracks: 3,
-  defaultVolume: 0.7,
+  trackLength: 3,
+  masterVolume: 0.7,
   defaultAudioOptions: {
     locale: "fr",
   },
@@ -36,27 +36,58 @@ Example using the custom react hook
 
 ```javascript
 import React, { useEffect } from "react"
-import { useAudiotracks, AudiotrackManager } from "react-audio-tracks"
+import AudiotrackManager, {
+  useAudiotracks,
+  useTrackStream,
+} from "react-audio-tracks"
 
 const TestScreen = (props) => {
+  // listen to the global state
   const state = useAudiotracks()
-  const audioRef = useRef(null)
+
+  // listen to the individual track stream state of the track index #0
+  const [stream, trackInstance] = useTrackStream(0)
+  const audioRef = useRef < HTMLAudioElement > null
 
   useEffect(() => {
     if (state) {
-      const { tracks, globalVolume, globalMuted, ...rest } = state
+      const { tracks, masterVolume, globalMuted, ...rest } = state
+      // state of every tracks
       tracks.forEach((track, idx) => {
-        const { queue, caption, volume, muted } = track
-        console.log(`track [${idx}] - volume: ${volume} muted: ${muted}`)
-        if (caption?.text) {
-          console.log(`caption: ${caption.text}`)
-        }
-        queue.forEach((audio) => {
-          console.log(audio.src)
-        })
+        const { queue, isPlaying, volume, muted } = track
+        console.log(
+          `Track [${idx}] - volume: ${volume} muted: ${muted} is ${
+            isPlaying ? "playing" : "not playing"
+          }`
+        )
       })
     }
   }, [state])
+
+  useEffect(() => {
+    if (stream) {
+      const { caption, audioItemState, innerAudioState } = stream
+      if (caption) {
+        console.log(`Track [#0] is displaying caption: ${caption.text}`)
+      }
+      // state of the AudioItem class
+      if (audioItemState) {
+        console.log(
+          `Track [#0]'s current audio item state ${JSON.stringify(
+            audioItemState
+          )}`
+        )
+      }
+      // state of the inner HTMLAudioElement
+      if (innerAudioState) {
+        console.log(
+          `Track [#0]'s inner HTMLAudioElement state ${JSON.stringify(
+            innerAudioState
+          )}`
+        )
+      }
+    }
+  }, [stream])
 
   const loopAudioOnTrack0 = () => {
     AudiotrackManager.purgeTrack(0)
@@ -89,23 +120,26 @@ const TestScreen = (props) => {
 
   const playWithoutTrack = () => {
     // not assigning any tracks
-    const audio = AudiotrackManager.playAudio("/audios/guitar1.mp3", {
-      onEnd: () => {
-        audioRef.current = null
-      },
-    })
+    const audio: HTMLAudioElement = AudiotrackManager.playAudio(
+      "/audios/guitar1.mp3",
+      {
+        onEnd: () => {
+          audioRef.current = null
+        },
+      }
+    )
     audioRef.current = audio
   }
 
   const stopGuitar = () => {
     // will stop the audio and leave it to the garbage collector to clean up.
-    if(audioRef.current){
+    if (audioRef.current) {
       audioRef.current?.purge()
       audioRef.current = null
     }
   }
 
-  const changeGlobalVolume = AudiotrackManager.setGlobalVolume
+  const changemasterVolume = AudiotrackManager.setMasterVolume
 
   return <></>
 }

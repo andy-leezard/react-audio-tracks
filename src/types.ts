@@ -56,6 +56,17 @@ export type Subtitle = {
   narrator?: string
 }
 
+export type AudioCallbacks = {
+  /* callbacks */
+  onPlay?: () => void | undefined
+  onUpdate?: () => void | undefined
+  onPause?: () => void | undefined
+  onEnd?: () => void | undefined
+  onError?: () => void | undefined
+}
+
+// export type AudioCallback<K extends keyof AudioCallbacks> = AudioCallbacks[K]
+
 /**
  * Options used to configure the individual `IAudioItem`'s behavior
  *
@@ -66,29 +77,9 @@ export type AudioOptions = {
    */
   volume?: number
 
-  /**
-   * This property is inherited from the `Track.autoPlay` property.
-   * By giving this option, you override it.
-   *
-   * If `true`: The audio will be played immediately on the queue.
-   * If the audio is waiting on the queue, it will be automatically played when all the previous items have finished playing.
-   * If the queue is empty, the audio will be played immediately after being registered to the queue.
-   *
-   * Default (`false`): The audio shall be played on demand.
-   */
-  autoPlay?: boolean
+  muted?: boolean
 
-  /* callbacks */
-  onStart?: () => void | undefined
-  onEnd?: () => void | undefined
-
-  /* CORE FEATURE */
-  /**
-   *  Assigns a track with index, and the audio will be pushed to its queue.
-   *
-   *  Default: 0
-   */
-  trackIdx?: number
+  loop?: boolean
 
   // internationalization of subtitles
   locale?: string | undefined
@@ -140,7 +131,6 @@ export type AudioOptions = {
 }
 
 export type CaptionState = {
-  isPlaying: boolean
   /**
    * Current caption
    */
@@ -165,103 +155,30 @@ export type CaptionState = {
   narrator?: string
 }
 
-export type AudioItemConstructor = {
-  id: string // unique identifier
-  src: string // audio source
-  filename: string
-  audio: HTMLAudioElement | undefined
+export type PlayRequestConstructor = {
+  src: string
 
   /**
-   *  Dynamically inherited from type: `AudioOptions` input when an audio is registered to the queue.
+   * Target track index
    */
-  autoPlay?: boolean
+  trackIdx: number
 
+  audioOptions?: AudioOptions
   /**
-   * Refer to type: `Subtitle`
+   * Metadata that can be used to render a custom modal dialog
    */
-  subtitles?: Subtitle
-}
-
-export interface IAudioItem extends AudioItemConstructor {
-  play: () => void
-  purge: () => void
-
-  /**
-   * Indicates whether or not the event listeners were registered.
-   * If true: it specifically means that `play` method here has been already called.
-   * @deprecated will always return true now
-   */
-  loaded?: boolean | undefined
-}
-
-export type Track = {
-  queue: IAudioItem[]
-  currentAudio: IAudioItem | null
-  name: string
-  caption?: CaptionState | null
-
-  /**
-   * Any change will affect all audios on the queue in real-time.
-   * This value will be overriden by any change from the `globalVolume`.
-   *
-   * Default: `globalVolume`
-   */
-  volume: number
-  /**
-   * Will be overriden by the `globalMuted` value.
-   *
-   * Default: `false`
-   */
-  muted: boolean
-  /**
-   * Will loop any audio registered. When it changes, it affects all audios on the queue.
-   *
-   * Defulat: `false`
-   */
-  loop: boolean
-  /**
-   *  Indicates if the current audio is currently playing.
-   *
-   *  Alternatively you can directly access the `currentAudio.audio.pause` state to check.
-   */
-  isPlaying: boolean
-  /**
-   * Indicates if the track should, by default, autoplay any audio being registered.
-   *
-   * When it changes, it affects all audios on the queue.
-   *
-   * Defulat: `false`
-   */
-  autoPlay: boolean
-  /**
-   *  Indicates if the track should allow adding the same audio to the queue simultaneously.
-   *
-   *  Defulat: `false`
-   */
-  allowDuplicates: boolean
-
-  /**
-   * name of the audio source file currently playing
-   * @deprecated Use `currentAudio` instead.
-   */
-  currentlyPlaying: string
-}
-
-/* USECASE : some mobile (tablet) devices doesn't let the navigator play sounds programmatically.
- * In that case, the sound can only be played in the process of a user interaction event (such as click events).
- * So here is an interesting workaround to add a step before automatically playing the audio.
- * Extended type of param{options} will provide an additional context to pop up a modal dialogue asking if the user wants to play the sound or not.
- * This will be fed into the track's queue.
- */
-export type PlayRequest = {
-  id: string // unique identifier
-  src: string // audio source
-  trackIdx: number // target track index
-  options?: AudioOptions & {
+  metadata?: {
     title?: string
     description?: string
     imgsrc?: string
   }
+}
+
+export type PlayRequest = PlayRequestConstructor & {
+  id: string
+
+  onAccept: () => void
+  onReject: () => void
 }
 
 /*
@@ -271,30 +188,36 @@ export type AudioManagerState = {
   /**
    * Array of tracks that can play sounds concurrently.
    */
-  tracks: Track[]
+  readonly tracks: TrackState[]
 
   /**
    * Requests to user interaction before feeding into the track and play the audio automatically
    */
-  playRequests: PlayRequest[]
+  readonly playRequests: PlayRequest[]
 
   /**
-   * Will override all tracks and the audios in it.
+   * A float between 0 - 1.
+   *
+   * Coefficient to the track's `volume` property.
+   *
+   * Set it with `AudiotrackManager.setGlobalVolume` method.
    *
    * Default: `0.5`
    */
-  globalVolume: number
+  readonly masterVolume: number
 
   /**
-   * Will override all tracks and the audios in it.
+   * Indicates whether or not all tracks are muted.
+   *
+   * Toggle / Set it with `AudiotrackManager.toggleGlobalMute` method. It will affect all tracks globally.
    *
    * Default: `false`
    */
-  globalMuted: boolean
+  readonly globalMuted: boolean
 
   /* JITSI RELATED */
-  jitsiIsMuted: boolean
-  conferenceVolumes: {
+  readonly jitsiIsMuted: boolean
+  readonly conferenceVolumes: {
     [pid: string]: {
       volume: number
       muted: boolean
@@ -303,43 +226,82 @@ export type AudioManagerState = {
 }
 
 // Config state of the class
-export type AudiotrackManagerState = {
+export type AudiotrackManagerSettings = {
   /**
    * Will console.log/warn/error
    */
-  debug?: boolean
+  readonly debug?: boolean
 
   /**
    * Global source of subtitles
-   * 
+   *
    * Refer to type `Subtitle`
    */
-  subtitlesJSON?: Record<string, Subtitle[]>
+  readonly subtitlesJSON?: SubtitlesJSON
 
   /**
    * Default: `1`
    */
-  number_of_tracks?: number
+  readonly trackLength?: number
 
   /**
    * A float between  0 and 1
-   * 
+   *
    * Default: `0.5`
    */
-  defaultVolume?: number
+  readonly masterVolume?: number
 
   /**
    * Default: `{ locale:'en' }`
    */
-  defaultAudioOptions?: AudioOptions
+  readonly defaultAudioOptions?: AudioOptions & { trackIdx?: number }
 
   /**
    * Default: `'en'`
    */
-  fallbackLocale?: string
+  readonly fallbackLocale?: string
 
   /**
    * Default: `['en']`
    */
-  supportedLocales: string[]
+  readonly supportedLocales: string[]
+}
+
+export type MutTrackState = {
+  volume: number
+  muted: boolean
+  loop: boolean
+  autoPlay: boolean
+  allowDuplicates: boolean
+}
+
+export type TrackState = MutTrackState & {
+  readonly id: string
+  readonly queue: AudioItemState[]
+  isPlaying: boolean
+}
+
+export type AudioItemState = {
+  readonly id: string
+  readonly src: string
+  readonly filename: string
+  readonly paused: boolean
+  readonly ended: boolean
+  readonly started: boolean
+}
+
+export type InnerAudioState = {
+  readonly muted: boolean
+  readonly volume: number
+  readonly currentTime: number
+  readonly duration: number
+  readonly paused: boolean
+  readonly playbackRate: number
+  readonly preservesPitch: boolean
+}
+
+export type TrackStream = {
+  readonly audioItemState: AudioItemState | null
+  caption: CaptionState | null
+  readonly innerAudioState: InnerAudioState | null
 }
