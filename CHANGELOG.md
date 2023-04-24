@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.1
+
+### Patch Changes
+
+- d4e7035: changing `autoPlay` settings of an idle track will automatically trigger `play`.
+
 ## 1.0.0
 
 ### Major Changes
