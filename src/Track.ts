@@ -174,7 +174,7 @@ class Track {
     const payload: Partial<T.TrackState> = {}
     if (typeof autoPlay === "boolean") {
       payload.autoPlay = autoPlay
-      this.resumeTrack()
+      this.togglePlay(true)
     }
     if (typeof loop === "boolean") {
       payload.loop = loop
@@ -207,11 +207,18 @@ class Track {
     audioItem.play()
   }
 
-  togglePlay() {
+  /**
+   * @param override if true : always triggers `audioItem.play()`.
+   */
+  togglePlay(override?: boolean) {
     if (!this.#Queue.length) return
     const audioItem = this.#Queue[0]
     if (!audioItem) return
-    if (audioItem?.getState().paused || !audioItem?.getState().started) {
+    if (
+      override ||
+      audioItem?.getState().paused ||
+      !audioItem?.getState().started
+    ) {
       audioItem.play()
     } else {
       audioItem.pause()
