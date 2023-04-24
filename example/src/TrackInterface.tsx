@@ -12,8 +12,7 @@ import { TfiLoop } from "react-icons/tfi"
 import { MdQueueMusic } from "react-icons/md"
 import { getFileName } from "./utils"
 import { useTrackStream } from "react-audio-tracks"
-import type { AudioOptions } from "react-audio-tracks"
-import { TrackState } from "./module/types"
+import type { AudioOptions, TrackState } from "react-audio-tracks"
 
 type TrackInterfaceProps = {
   inheritState: TrackState

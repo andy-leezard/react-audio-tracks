@@ -1,6 +1,6 @@
 import * as UI from "./UI"
 import { useTrackStream } from "react-audio-tracks"
-import { TrackState } from "./module/types"
+import type { TrackState } from "react-audio-tracks"
 
 type CaptionViewerProps = {
   inheritState: TrackState
