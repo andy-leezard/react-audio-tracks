@@ -1,5 +1,15 @@
 # react-audio-tracks
 
+## 1.0.3
+
+### Patch Changes
+
+- 5ff4bf1: 1. Jitsi-related type name changes to make it easier to understand.
+
+  2. Type name change (`AudioManagerState` => `AudiotrackManagerState`)
+
+  3. Dynamic optimization of the hook `useTrackStream` with various options
+
 ## 1.0.2
 
 ### Patch Changes
