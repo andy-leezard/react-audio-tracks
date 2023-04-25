@@ -262,7 +262,7 @@ function App() {
             marginTop: "0.75rem",
           }}
         >
-          V0.11.5 MIT © 2023{" "}
+          V1.0.2 MIT © 2023{" "}
           <a href="https://github.com/AndyLeezard" target="_blank">
             Andy Lee 🔗
           </a>
