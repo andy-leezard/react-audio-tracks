@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.2
+
+### Patch Changes
+
+- d6c7dfb: bugfix: false negative if statement in `Track.applyMasterVolume` method.
+
 ## 1.0.1
 
 ### Patch Changes
