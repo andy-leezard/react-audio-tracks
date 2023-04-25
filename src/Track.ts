@@ -9,7 +9,6 @@ class Track {
   #name: string = ""
   #queue: AudioItem[] = []
   #subtitlesJSON: T.SubtitlesJSON = {}
-  defaultAudioOptions: T.AudioOptions = {}
   #getInheritedAudioOptions: () => T.AudioOptions = () => ({})
   #getInheritedState: () => T.AudiotrackManagerState | null = () => null
 
@@ -21,6 +20,7 @@ class Track {
     muted: false,
     loop: false,
     autoPlay: false,
+    locale: "en",
     allowDuplicates: false,
   }
   private state_listeners: T.Listener<T.TrackState>[] = []
@@ -34,7 +34,7 @@ class Track {
   updateTrackCallback: (trackState: T.TrackState) => void = () => {}
 
   constructor(
-    args: Partial<Omit<T.TrackState, "queue">> & {
+    args: Partial<T.MutTrackState> & {
       debug: boolean
       index: number
       name?: string
@@ -47,7 +47,6 @@ class Track {
       debug,
       index,
       name,
-      volume,
       getInheritedState,
       updateTrackCallback,
       getInheritedAudioOptions,
@@ -62,10 +61,16 @@ class Track {
       const { trackIdx, ...rest } = getInheritedAudioOptions()
       return rest
     }
-    Object.assign(this.#state, rest)
-    if (typeof volume === "number") {
-      this.#state.volume = Math.max(0, Math.min(1, volume))
-    }
+    const { volume, muted, loop, locale, allowDuplicates } =
+      this.#getInheritedAudioOptions()
+    Object.assign(this.#state, {
+      volume,
+      muted,
+      loop,
+      locale,
+      allowDuplicates,
+      ...rest,
+    })
   }
 
   public getState(): T.TrackState {
@@ -256,22 +261,14 @@ class Track {
     audio.setAttribute("id", uid)
     audio.volume =
       (volume ??
-        this.defaultAudioOptions.volume ??
+        this.#State.volume ??
         inhertiedAudioOptions.volume ??
         C.DEFAULT_VOLUME) *
       (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
     audio.muted =
-      muted ??
-      this.defaultAudioOptions.muted ??
-      inhertiedAudioOptions.muted ??
-      false
-    audio.loop =
-      loop ??
-      this.defaultAudioOptions.loop ??
-      inhertiedAudioOptions.loop ??
-      false
-    const _locale =
-      locale ?? this.defaultAudioOptions.locale ?? inhertiedAudioOptions.locale
+      muted ?? this.#State.muted ?? inhertiedAudioOptions.muted ?? false
+    audio.loop = loop ?? this.#State.loop ?? inhertiedAudioOptions.loop ?? false
+    const _locale = locale ?? this.#State.locale ?? inhertiedAudioOptions.locale
     const _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
     const _subtitles =
       subtitles ??

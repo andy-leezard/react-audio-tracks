@@ -273,6 +273,7 @@ export type MutTrackState = {
   loop: boolean
   autoPlay: boolean
   allowDuplicates: boolean
+  locale: string
 }
 
 export type TrackState = MutTrackState & {

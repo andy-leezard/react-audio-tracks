@@ -76,9 +76,6 @@ class AudiotrackManager {
         payload.locale = _locale
       }
       this.#defaultAudioOptions = payload
-      if (initialize) {
-        this.#Tracks.forEach((track) => (track.defaultAudioOptions = payload))
-      }
     }
     /* TODO : GRACEFULLY HANDLE REDUCING (DELETING) TRACKS LENGTH */
   }
@@ -144,7 +141,9 @@ class AudiotrackManager {
     this.#updateState({ tracks: this.#tracks.map((track) => track.getState()) })
   }
 
-  static onStateChange(listener: T.Listener<T.AudiotrackManagerState>): () => void {
+  static onStateChange(
+    listener: T.Listener<T.AudiotrackManagerState>
+  ): () => void {
     this.state_listeners.push(listener)
     return () => {
       this.state_listeners = this.state_listeners.filter((l) => l !== listener)
@@ -206,6 +205,10 @@ class AudiotrackManager {
   static updateTrack(index: number, payload: Partial<T.MutTrackState>) {
     const track = this.getTrack(index)
     if (!track) return
+    const { muted } = payload
+    if (this.#State.globalMuted && muted === false) {
+      this.#updateState({ globalMuted: muted })
+    }
     track.updateState(payload)
   }
 
