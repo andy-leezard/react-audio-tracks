@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.5
+
+### Patch Changes
+
+- 97ef2ac: Important bugfix - Initial track properties were reassigned to undefined if options were not explicitly given.
+
 ## 1.0.4
 
 ### Patch Changes
