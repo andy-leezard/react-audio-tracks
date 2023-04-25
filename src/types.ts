@@ -319,7 +319,7 @@ export type StreamOptions = {
   /**
    * Arbitrary value to force-update the hook.
    */
-  key?: number
+  key?: string | number
 
   /**
    * Will disable the hook and let it return null
