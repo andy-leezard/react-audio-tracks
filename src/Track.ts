@@ -61,14 +61,8 @@ class Track {
       const { trackIdx, ...rest } = getInheritedAudioOptions()
       return rest
     }
-    const { volume, muted, loop, locale, allowDuplicates } =
-      this.#getInheritedAudioOptions()
     Object.assign(this.#state, {
-      volume,
-      muted,
-      loop,
-      locale,
-      allowDuplicates,
+      ...this.#getInheritedAudioOptions(),
       ...rest,
     })
   }
@@ -492,6 +486,16 @@ class Track {
   applyMasterVolume(masterVolume: number) {
     this.#queue.forEach((item) =>
       item.setVolume(masterVolume * this.#State.volume)
+    )
+  }
+
+  /**
+   * @returns the volume multiplied by the master volume reference
+   */
+  getAdjustedVolume() {
+    return (
+      this.#State.volume *
+      (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
     )
   }
 }
