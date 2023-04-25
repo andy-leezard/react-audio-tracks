@@ -199,4 +199,3 @@ pnpm changeset init
 # License
 
 React-audio-track is licensed under the MIT License.
-V0.11.0 MIT © 2023 Andy Lee 🔗
