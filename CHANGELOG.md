@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.4
+
+### Patch Changes
+
+- 5dfd325: 1. accept string as `useTrackStream` hook's `key` option 2. audio options inheritance related bugfix
+
 ## 1.0.3
 
 ### Patch Changes
