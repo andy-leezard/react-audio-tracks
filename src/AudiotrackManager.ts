@@ -21,8 +21,8 @@ class AudiotrackManager {
     playRequests: [],
     masterVolume: C.DEFAULT_VOLUME,
     globalMuted: false,
-    jitsiIsMuted: false,
-    conferenceVolumes: {},
+    jitsiMuted: false,
+    jitsiConferenceContext: {},
   }
 
   private static state_listeners: T.Listener<T.AudioManagerState>[] = []
@@ -501,10 +501,10 @@ class AudiotrackManager {
     pid: string,
     options?: { volume?: number; muted?: boolean }
   ) => {
-    if (this.#State.conferenceVolumes[pid]) return
-    const volumes = this.#State.conferenceVolumes
+    if (this.#State.jitsiConferenceContext[pid]) return
+    const volumes = this.#State.jitsiConferenceContext
     this.#updateState({
-      conferenceVolumes: {
+      jitsiConferenceContext: {
         ...volumes,
         [pid]: {
           volume: typeof options?.volume === "number" ? options.volume : 1,
@@ -523,7 +523,7 @@ class AudiotrackManager {
     pid: string,
     args: { volume?: number; muted?: boolean }
   ) => {
-    const prev = this.#State.conferenceVolumes
+    const prev = this.#State.jitsiConferenceContext
     if (!prev[pid]) {
       this.initializeConferenceRefs(pid, args)
       return
@@ -535,7 +535,7 @@ class AudiotrackManager {
     if (typeof muted === "boolean") {
       prev[pid]!.muted = muted
     }
-    this.#updateState({ conferenceVolumes: prev })
+    this.#updateState({ jitsiConferenceContext: prev })
   }
 }
 

@@ -216,8 +216,8 @@ export type AudioManagerState = {
   readonly globalMuted: boolean
 
   /* JITSI RELATED */
-  readonly jitsiIsMuted: boolean
-  readonly conferenceVolumes: {
+  readonly jitsiMuted: boolean
+  readonly jitsiConferenceContext: {
     [pid: string]: {
       volume: number
       muted: boolean
