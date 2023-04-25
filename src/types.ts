@@ -184,7 +184,7 @@ export type PlayRequest = PlayRequestConstructor & {
 /*
  * useSoundtrackState hook returns this object.
  */
-export type AudioManagerState = {
+export type AudiotrackManagerState = {
   /**
    * Array of tracks that can play sounds concurrently.
    */
@@ -304,4 +304,25 @@ export type TrackStream = {
   readonly audioItemState: AudioItemState | null
   caption: CaptionState | null
   readonly innerAudioState: InnerAudioState | null
+}
+
+/**
+ * Options used to control the `useTrackStream` hook.
+ */
+export type StreamOptions = {
+  /**
+   * Reference value to force-update the hook.
+   * Provide this value if the `Track` is expected to be instantiated AFTER the initial render of the hooked component.
+   */
+  trackLength?: number
+
+  /**
+   * Arbitrary value to force-update the hook.
+   */
+  key?: number
+
+  /**
+   * Will disable the hook and let it return null
+   */
+  disabled?: boolean
 }

@@ -16,7 +16,7 @@ class AudiotrackManager {
   static #tracks: Track[] = this.#populateTracks(C.DEFAULT_NUMBER_OF_TRACKS)
 
   /* STATE */
-  static #state: T.AudioManagerState = {
+  static #state: T.AudiotrackManagerState = {
     tracks: this.#tracks.map((track) => track.getState()),
     playRequests: [],
     masterVolume: C.DEFAULT_VOLUME,
@@ -25,7 +25,7 @@ class AudiotrackManager {
     jitsiConferenceContext: {},
   }
 
-  private static state_listeners: T.Listener<T.AudioManagerState>[] = []
+  private static state_listeners: T.Listener<T.AudiotrackManagerState>[] = []
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
   /* - - - - - - - - - - - - - CONFIG - - - - - - - - - - - - - - - */
@@ -121,15 +121,15 @@ class AudiotrackManager {
   /* - - - - - - - - - - - STATE MANAGEMENT - - - - - - - - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  public static getState(): T.AudioManagerState {
+  public static getState(): T.AudiotrackManagerState {
     return this.#State
   }
 
-  static get #State(): T.AudioManagerState {
+  static get #State(): T.AudiotrackManagerState {
     return this.#state
   }
 
-  static set #State(value: T.AudioManagerState) {
+  static set #State(value: T.AudiotrackManagerState) {
     this.#state = value
     this.emit()
   }
@@ -144,7 +144,7 @@ class AudiotrackManager {
     this.#updateState({ tracks: this.#tracks.map((track) => track.getState()) })
   }
 
-  static onStateChange(listener: T.Listener<T.AudioManagerState>): () => void {
+  static onStateChange(listener: T.Listener<T.AudiotrackManagerState>): () => void {
     this.state_listeners.push(listener)
     return () => {
       this.state_listeners = this.state_listeners.filter((l) => l !== listener)
@@ -159,7 +159,7 @@ class AudiotrackManager {
   /* - - - - - ABSTRACTION LAYER TO ENSURE SETTER TRIGGER - - - - - */
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 
-  static #updateState(value?: Partial<T.AudioManagerState>) {
+  static #updateState(value?: Partial<T.AudiotrackManagerState>) {
     const prev = this.#State
     const newState = { ...prev, ...value }
     this.#State = newState
@@ -170,7 +170,7 @@ class AudiotrackManager {
    * The change will be directly emitted via `useAudiotracks` hooks.
    */
   static updateState(
-    value: Omit<Partial<T.AudioManagerState>, "tracks" | "playRequests">
+    value: Omit<Partial<T.AudiotrackManagerState>, "tracks" | "playRequests">
   ) {
     this.#updateState(value)
   }

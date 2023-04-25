@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import AudiotrackManager from "./AudiotrackManager"
-import type { AudioManagerState } from "./types"
+import type { AudiotrackManagerState } from "./types"
 
-function useAudiotracks(): AudioManagerState {
-  const [state, setState] = useState<AudioManagerState>(
+function useAudiotracks(): AudiotrackManagerState {
+  const [state, setState] = useState<AudiotrackManagerState>(
     AudiotrackManager.getState()
   )
 

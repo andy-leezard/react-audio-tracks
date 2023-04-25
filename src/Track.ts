@@ -11,7 +11,7 @@ class Track {
   #subtitlesJSON: T.SubtitlesJSON = {}
   defaultAudioOptions: T.AudioOptions = {}
   #getInheritedAudioOptions: () => T.AudioOptions = () => ({})
-  #getInheritedState: () => T.AudioManagerState | null = () => null
+  #getInheritedState: () => T.AudiotrackManagerState | null = () => null
 
   #state: T.TrackState = {
     queue: [],
@@ -38,7 +38,7 @@ class Track {
       debug: boolean
       index: number
       name?: string
-      getInheritedState: () => T.AudioManagerState
+      getInheritedState: () => T.AudiotrackManagerState
       getInheritedAudioOptions: () => T.AudioOptions & { trackIdx?: number }
       updateTrackCallback: (trackState: T.TrackState) => void
     }
