@@ -11,6 +11,7 @@ class Track {
   #subtitlesJSON: T.SubtitlesJSON = {}
   defaultAudioOptions: T.AudioOptions = {}
   #getInheritedAudioOptions: () => T.AudioOptions = () => ({})
+  #getInheritedState: () => T.AudioManagerState | null = () => null
 
   #state: T.TrackState = {
     queue: [],
@@ -37,6 +38,7 @@ class Track {
       debug: boolean
       index: number
       name?: string
+      getInheritedState: () => T.AudioManagerState
       getInheritedAudioOptions: () => T.AudioOptions & { trackIdx?: number }
       updateTrackCallback: (trackState: T.TrackState) => void
     }
@@ -46,6 +48,7 @@ class Track {
       index,
       name,
       volume,
+      getInheritedState,
       updateTrackCallback,
       getInheritedAudioOptions,
       ...rest
@@ -53,6 +56,7 @@ class Track {
     this.debug = debug
     this.#index = index
     this.#name = name ?? `Track #${index}`
+    this.#getInheritedState = getInheritedState
     this.updateTrackCallback = updateTrackCallback
     this.#getInheritedAudioOptions = () => {
       const { trackIdx, ...rest } = getInheritedAudioOptions()
@@ -185,7 +189,9 @@ class Track {
     if (typeof volume === "number") {
       payload.volume = volume
       this.#Queue.forEach((item) => {
-        item.setVolume(volume)
+        item.setVolume(
+          volume * (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
+        )
       })
     }
     if (typeof muted === "boolean") {
@@ -249,10 +255,11 @@ class Track {
     const uid = Date.now().toString()
     audio.setAttribute("id", uid)
     audio.volume =
-      volume ??
-      this.defaultAudioOptions.volume ??
-      inhertiedAudioOptions.volume ??
-      C.DEFAULT_VOLUME
+      (volume ??
+        this.defaultAudioOptions.volume ??
+        inhertiedAudioOptions.volume ??
+        C.DEFAULT_VOLUME) *
+      (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
     audio.muted =
       muted ??
       this.defaultAudioOptions.muted ??
@@ -485,12 +492,10 @@ class Track {
    *
    * Do not call this method manually.
    */
-  applyMasterVolume(override: number) {
-    if (override) {
-      this.#queue.forEach((item) =>
-        item.setVolume(override * this.#State.volume)
-      )
-    }
+  applyMasterVolume(masterVolume: number) {
+    this.#queue.forEach((item) =>
+      item.setVolume(masterVolume * this.#State.volume)
+    )
   }
 }
 

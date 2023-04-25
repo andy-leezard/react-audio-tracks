@@ -104,6 +104,7 @@ class AudiotrackManager {
         new Track({
           debug: this.#debug,
           index: i,
+          getInheritedState: () => this.#state,
           getInheritedAudioOptions: () => this.#defaultAudioOptions,
           updateTrackCallback: (trackState: T.TrackState) => {
             this.#updateTrackState(i, trackState)
