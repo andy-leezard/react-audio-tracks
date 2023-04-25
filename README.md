@@ -30,24 +30,27 @@ AudiotrackManager.initialize({
   fallbackLocale: "fr",
   supportedLocales: ["en", "fr", "ko"],
 })
+
+//recommended settings for tracks
+AudiotrackManager.updateAllTracks({ autoPlay: true, allowDuplicates: true })
 ```
 
 Example using the custom react hook
 
 ```javascript
-import React, { useEffect } from "react"
+import React, { useEffect, useRef } from "react"
 import AudiotrackManager, {
   useAudiotracks,
   useTrackStream,
 } from "react-audio-tracks"
 
-const TestScreen = (props) => {
+const TestScreen = () => {
   // listen to the global state
   const state = useAudiotracks()
 
   // listen to the individual track stream state of the track index #0
   const [stream, trackInstance] = useTrackStream(0)
-  const audioRef = useRef < HTMLAudioElement > null
+  const audioRef = useRef<Array<HTMLAudioElement | null>>([])
 
   useEffect(() => {
     if (state) {
@@ -55,6 +58,7 @@ const TestScreen = (props) => {
       // state of every tracks
       tracks.forEach((track, idx) => {
         const { queue, isPlaying, volume, muted } = track
+        // same thing as `trackInstance.getState()`
         console.log(
           `Track [${idx}] - volume: ${volume} muted: ${muted} is ${
             isPlaying ? "playing" : "not playing"
@@ -70,11 +74,24 @@ const TestScreen = (props) => {
       if (caption) {
         console.log(`Track [#0] is displaying caption: ${caption.text}`)
       }
+      const currentAudioState = audioItemState
+      // same thing as `trackInstance?.getCurrentAudio()`
+
+      const nextAudioState = trackInstance?.getNextAudio()
       // state of the AudioItem class
-      if (audioItemState) {
+      if (currentAudioState) {
+        const { src, filename, paused, ended, started } = currentAudioState
+        console.log(
+          `Track [#0] is currently playing audio item state ${JSON.stringify(
+            currentAudioState
+          )}`
+        )
+      }
+      if (nextAudioState) {
+        const { src, filename, paused, ended, started } = nextAudioState
         console.log(
           `Track [#0]'s current audio item state ${JSON.stringify(
-            audioItemState
+            nextAudioState
           )}`
         )
       }
@@ -93,18 +110,18 @@ const TestScreen = (props) => {
     AudiotrackManager.purgeTrack(0)
     AudiotrackManager.registerAudio("/audios/drumline1.mp3", {
       trackIdx: 0,
-      onStart: () => {
-        console.log("Intro drumline started")
+      onPlay: () => {
+        console.log("Drumline part 1 started")
       },
       onEnd: () => {
-        console.log("Intro drumline ended")
+        console.log("Drumline part 1 ended")
       },
     })
     AudiotrackManager.registerAudio("/audios/drumline2.mp3", {
       trackIdx: 0,
       loop: true,
-      onStart: () => {
-        console.log("Real drumline started")
+      onPlay: () => {
+        console.log("Drumline part 2 started")
       },
     })
   }
@@ -124,18 +141,33 @@ const TestScreen = (props) => {
       "/audios/guitar1.mp3",
       {
         onEnd: () => {
-          audioRef.current = null
+          audioRef.current[0] = null
         },
       }
     )
-    audioRef.current = audio
+    audioRef.current[0] = audio
+  }
+
+  const pauseTrack = () => {
+    trackInstance?.togglePlay(false)
+  }
+
+  const resumeTrack = () => {
+    trackInstance?.resumeTrack()
+  }
+
+  const playTrack = () => {
+    trackInstance?.togglePlay(true)
+  }
+
+  const togglePlayTrack = () => {
+    trackInstance?.togglePlay()
   }
 
   const stopGuitar = () => {
     // will stop the audio and leave it to the garbage collector to clean up.
-    if (audioRef.current) {
-      audioRef.current?.purge()
-      audioRef.current = null
+    if (audioRef.current[0]) {
+      audioRef.current[0].dispatchEvent(new Event("ended"))
     }
   }
 
