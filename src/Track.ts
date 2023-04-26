@@ -170,14 +170,9 @@ class Track {
    /**
    * updates the track's mutable state properties
    */
-   public updateState(
-    value: Pick<
-      Partial<T.TrackState>,
-      "autoPlay" | "loop" | "muted" | "volume" | "allowDuplicates"
-    >
-  ) {
+  public updateState(value: Partial<T.MutTrackState>) {
     const { autoPlay, loop, volume, muted, allowDuplicates } = value
-    const payload: Partial<T.TrackState> = {}
+    const payload: Partial<T.MutTrackState> = {}
     if (typeof autoPlay === "boolean") {
       payload.autoPlay = autoPlay
       this.togglePlay(true)
