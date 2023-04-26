@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.6
+
+### Patch Changes
+
+- 6a87581: Type updates and documentation typo fixes.
+
 ## 1.0.5
 
 ### Patch Changes
