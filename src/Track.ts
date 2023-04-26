@@ -167,7 +167,10 @@ class Track {
     this.#State = newState
   }
 
-  public updateState(
+   /**
+   * updates the track's mutable state properties
+   */
+   public updateState(
     value: Pick<
       Partial<T.TrackState>,
       "autoPlay" | "loop" | "muted" | "volume" | "allowDuplicates"
@@ -205,6 +208,9 @@ class Track {
     this.#updateState(payload)
   }
 
+  /**
+   * Will resume the track only if it has a currently playing audio that has been paused.
+   */
   resumeTrack() {
     if (!this.#Queue.length) return
     const audioItem = this.#Queue[0]
@@ -365,6 +371,25 @@ class Track {
     this.#Queue = queue
   }
 
+  /**
+   * Registers an audio source to the `Track`'s queue to be played.
+   *
+   * By default, options inherit from the `Track`'s settings and then completes itself with `AudiotrackManager`'s settings if defined.
+   * Debug the options in runtime if needed by using `Track.defaultAudioOptions` or `AudiotrackManager.getDefaultAudioOptions`.
+   *
+   * `AudiotrackManager`'s default `AudioOptions` can be set at the initializing phase by using `AudiotrackManager.initialize(...args)`
+   *
+   * If the `Track` has its property `autoPlay` set to `true`, the audio source will be played automatically.
+   * If there are already other audio sources registered or being played, it will be played right after those audios have finished playing.
+   * Otherwise, the audio source will be played on demand.
+   *
+   * if the option `priority` is given, it will override the new audio's index position in the `Track`'s `queue`, therefore `0` being the top priority and skipping the current audio.
+   *
+   * If the `Track` has its property `allowDuplicates` set tot `true`, a duplicate audio source can be registered on the `Track`'s queue at the same time.
+   *
+   * For more and subtitles related information, see the documentation of the type `AudioOptions`.
+   *
+   */
   registerAudio(src: string, options: T.AudioCallbacks & T.AudioOptions) {
     const dup = this.#Queue.find((s) => s.srcEqualTo(src))
     if (!options?.allowDuplicates && !this.#State.allowDuplicates && dup) {
@@ -402,6 +427,9 @@ class Track {
     }
   }
 
+  /**
+   * Skips the currently playing audio on the `Track`
+   */
   skipAudio = (target: number | string = 0, method?: "match" | "include") => {
     if (typeof target === "number") {
       if (this.#Queue.length <= target || target < 0) return
@@ -444,6 +472,9 @@ class Track {
     }
   }
 
+  /**
+   * Removes every audio registered in the queue and ends any currently playing audio.
+   */
   purgeTrack = () => {
     const queueLen = this.#Queue.length
     let queue = this.#State.queue
@@ -462,6 +493,9 @@ class Track {
     this.#updateState({ queue })
   }
 
+  /**
+   * Updates the subtitles ref for this track.
+   */
   injectSubtitles = (subtitlesJSON: T.SubtitlesJSON) => {
     this.#subtitlesJSON = subtitlesJSON
   }

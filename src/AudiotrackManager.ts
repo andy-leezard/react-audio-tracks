@@ -344,16 +344,16 @@ class AudiotrackManager {
   }
 
   /**
-   * Registeres an audio source to a `Track`'s queue to be played.
+   * Registers an audio source to a `Track`'s queue to be played.
    *
-   * By default, options inherit from the `Track`'s settings and then completes itself with `AudiotrackManager`'s settings.
-   * Refer to those or modify those if needed by using `Track.defaultAudioOptions` or `AudiotrackManager.getDefaultAudioOptions`.
+   * By default, options inherit from the `Track`'s settings and then completes itself with `AudiotrackManager`'s settings if defined.
+   * Debug the options in runtime if needed by using `Track.defaultAudioOptions` or `AudiotrackManager.getDefaultAudioOptions`.
    *
    * `AudiotrackManager`'s default `AudioOptions` can be set at the initializing phase by using `AudiotrackManager.initialize(...args)`
    *
    * Specify the `trackIdx` to target a specific `Track` to play the audio on. If it's not provided, this option inherits from `AudiotrackManager`'s settings (0 by default).
    *
-   * If the `Track` has its property `autoPlay` set to `true`, which is recommended, the audio source will be played automatically.
+   * If the `Track` has its property `autoPlay` set to `true`, the audio source will be played automatically.
    * If there are already other audio sources registered or being played, it will be played right after those audios have finished playing.
    * Otherwise, the audio source will be played on demand.
    *
