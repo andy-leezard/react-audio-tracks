@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.8
+
+### Patch Changes
+
+- e9ac8cc: Allow updating locale while rendering captions.
+
 ## 1.0.7
 
 ### Patch Changes
