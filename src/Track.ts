@@ -20,8 +20,8 @@ class Track {
     muted: false,
     loop: false,
     autoPlay: false,
-    locale: "en",
     allowDuplicates: false,
+    locale: undefined,
   }
   private state_listeners: T.Listener<T.TrackState>[] = []
 
@@ -62,7 +62,7 @@ class Track {
       return rest
     }
     Object.assign(this.#state, {
-      ...this.#getInheritedAudioOptions(),
+      ...this.#getReconstructor(),
       ...rest,
     })
   }
@@ -167,7 +167,7 @@ class Track {
     this.#State = newState
   }
 
-   /**
+  /**
    * updates the track's mutable state properties
    */
   public updateState(value: Partial<T.MutTrackState>) {
@@ -526,6 +526,35 @@ class Track {
       this.#State.volume *
       (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
     )
+  }
+
+  /**
+   * @returns a subset of the inherited mutable state to override the current state
+   */
+  #getReconstructor() {
+    const { volume, muted, loop, locale } = this.#getInheritedAudioOptions()
+    const subset: Partial<T.TrackState> = {}
+    if (typeof volume === "number") {
+      subset.volume = volume
+    }
+    if (typeof muted === "boolean") {
+      subset.muted = muted
+    }
+    if (typeof loop === "boolean") {
+      subset.loop = loop
+    }
+    if (typeof locale === "string") {
+      subset.locale = locale
+    }
+    return subset
+  }
+
+  /**
+   * Re-construct its state from `AudiotrackManager` after a global audio options or locale change.
+   * This will inherit and overwrite all applicable audio options.
+   */
+  reconstruct() {
+    this.#updateState(this.#getReconstructor())
   }
 }
 

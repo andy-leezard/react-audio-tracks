@@ -68,7 +68,7 @@ class AudiotrackManager {
     if (args.defaultAudioOptions) {
       const { locale, ...rest } = args.defaultAudioOptions
       let _locale = locale
-      if (_locale && !args.supportedLocales.includes(_locale)) {
+      if (_locale && !this.#supportedLocales.includes(_locale)) {
         _locale = this.#fallbackLocale
       }
       const payload: T.AudioOptions = { ...rest }
@@ -93,6 +93,9 @@ class AudiotrackManager {
       this.#Tracks = this.#populateTracks(args.trackLength)
     }
     this.setConfiguration(rest, true)
+    this.#Tracks.forEach((track) => {
+      track.reconstruct()
+    })
   }
 
   static #populateTracks(length: number) {

@@ -273,7 +273,9 @@ export type MutTrackState = {
   loop: boolean
   autoPlay: boolean
   allowDuplicates: boolean
-  locale: string
+
+  /** inherited from `AudiotrackManager`*/
+  locale: string | undefined
 }
 
 export type TrackState = MutTrackState & {
