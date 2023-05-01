@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from "react"
-import subtitles from "./subtitles.json"
-import { GiDrumKit, GiGuitarBassHead, GiChopsticks } from "react-icons/gi"
+
+// Util
 import { getURLParam } from "./utils"
-import * as UI from "./UI"
+
+// Module
+import AudiotrackManager, { useAudiotracks } from "."
+// Module customization
+import subtitles from "./subtitles.json"
+
+// UI & Components
+import * as Styled from "./UI"
 import TrackInterface from "./TrackInterface"
 import CaptionViewer from "./CaptionViewer"
-import AudiotrackManager, { useAudiotracks } from "."
 import Checkbox from "./Checkbox"
+
+// react-icons
+import { GiDrumKit, GiGuitarBassHead, GiChopsticks } from "react-icons/gi"
+import { TbBrandNpm } from "react-icons/tb"
+import Footer from "./Footer"
 
 const NUMBER_OF_TRACKS = 3
 
@@ -45,8 +56,8 @@ function App() {
       console.log(`track length detected from URL (${track_length})`)
     }
     const mylocale = Intl.DateTimeFormat()
-    .resolvedOptions()
-    .locale.split("-")[0]!
+      .resolvedOptions()
+      .locale.split("-")[0]!
     AudiotrackManager.initialize({
       debug: import.meta.env.DEV || getURLParam("debug") === "true",
       subtitlesJSON: subtitles,
@@ -92,9 +103,9 @@ function App() {
   }
 
   return (
-    <UI.Wrapper>
-      <UI.Container>
-        <UI.Title>React-Audio-Tracks Controller</UI.Title>
+    <Styled.Wrapper>
+      <Styled.Container>
+        <Styled.Title>React-Audio-Tracks Controller</Styled.Title>
         <div style={{ display: "flex", alignSelf: "center", gap: "1rem" }}>
           <Checkbox
             checked={globalAutoPlay}
@@ -146,7 +157,7 @@ function App() {
             <label htmlFor="checkbox">Global Volume</label>
           </div>
         </div>
-        <UI.Title>Demo Inputs</UI.Title>
+        <Styled.Title>Demo Inputs</Styled.Title>
         <select
           name="track #"
           id="track-select"
@@ -219,20 +230,20 @@ function App() {
             <span>Bass 1</span>
           </div>
         </div>
-        <UI.Title>Controller</UI.Title>
-        <UI.TrackLineInterface>
-          <UI.TrackIndex>Track #</UI.TrackIndex>
-          <UI.TrackQueue>Queued</UI.TrackQueue>
-          <UI.TrackMute>Muted</UI.TrackMute>
-          <UI.Width70>Vol</UI.Width70>
-          <UI.Width70>Looping</UI.Width70>
-          <UI.Width70>AutoPlay</UI.Width70>
-          <UI.TrackPlayState>State</UI.TrackPlayState>
-          <UI.Width70>Skip</UI.Width70>
-          <UI.Width120>Currently Playing</UI.Width120>
-          <UI.Width120>Next Playing</UI.Width120>
-          <UI.UserInputItem isLastChild>User Inputs</UI.UserInputItem>
-        </UI.TrackLineInterface>
+        <Styled.Title>Controller</Styled.Title>
+        <Styled.TrackLineInterface>
+          <Styled.TrackIndex>Track #</Styled.TrackIndex>
+          <Styled.TrackQueue>Queued</Styled.TrackQueue>
+          <Styled.TrackMute>Muted</Styled.TrackMute>
+          <Styled.Width70>Vol</Styled.Width70>
+          <Styled.Width70>Looping</Styled.Width70>
+          <Styled.Width70>AutoPlay</Styled.Width70>
+          <Styled.TrackPlayState>State</Styled.TrackPlayState>
+          <Styled.Width70>Skip</Styled.Width70>
+          <Styled.Width120>Currently Playing</Styled.Width120>
+          <Styled.Width120>Next Playing</Styled.Width120>
+          <Styled.UserInputItem isLastChild>User Inputs</Styled.UserInputItem>
+        </Styled.TrackLineInterface>
         {state.tracks.map((track, idx) => {
           return (
             <TrackInterface
@@ -242,13 +253,13 @@ function App() {
             />
           )
         })}
-        <UI.Title>Captions</UI.Title>
-        <UI.TrackLineInterface style={{ width: "100%" }}>
-          <UI.TrackIndex>Track #</UI.TrackIndex>
-          <UI.CaptionNarrator>Narrator</UI.CaptionNarrator>
-          <UI.CaptionDescription>Description</UI.CaptionDescription>
-          <UI.CaptionText>Text</UI.CaptionText>
-        </UI.TrackLineInterface>
+        <Styled.Title>Captions</Styled.Title>
+        <Styled.TrackLineInterface style={{ width: "100%" }}>
+          <Styled.TrackIndex>Track #</Styled.TrackIndex>
+          <Styled.CaptionNarrator>Narrator</Styled.CaptionNarrator>
+          <Styled.CaptionDescription>Description</Styled.CaptionDescription>
+          <Styled.CaptionText>Text</Styled.CaptionText>
+        </Styled.TrackLineInterface>
         {state.tracks.map((track, idx) => {
           return (
             <CaptionViewer
@@ -258,26 +269,9 @@ function App() {
             />
           )
         })}
-        <UI.GlitchedSpan
-          style={{
-            alignSelf: "center",
-            marginTop: "0.75rem",
-          }}
-        >
-          V1.0.7 MIT © 2023{" "}
-          <a href="https://github.com/AndyLeezard" target="_blank">
-            Andy Lee 🔗
-          </a>
-        </UI.GlitchedSpan>
-        <UI.GlitchedSpan
-          style={{
-            alignSelf: "center",
-          }}
-        >
-          React-audio-track is licensed under the MIT License.
-        </UI.GlitchedSpan>
-      </UI.Container>
-    </UI.Wrapper>
+        <Footer />
+      </Styled.Container>
+    </Styled.Wrapper>
   )
 }
 
