@@ -44,14 +44,16 @@ function App() {
     } else {
       console.log(`track length detected from URL (${track_length})`)
     }
-
+    const mylocale = Intl.DateTimeFormat()
+    .resolvedOptions()
+    .locale.split("-")[0]!
     AudiotrackManager.initialize({
       debug: import.meta.env.DEV || getURLParam("debug") === "true",
       subtitlesJSON: subtitles,
       trackLength: track_length,
       masterVolume: 0.5,
       defaultAudioOptions: {
-        locale: Intl.DateTimeFormat().resolvedOptions().locale.split("-")[0]!,
+        locale: mylocale,
       },
       fallbackLocale: "en",
       supportedLocales: ["en", "fr", "ko"],
@@ -262,7 +264,7 @@ function App() {
             marginTop: "0.75rem",
           }}
         >
-          V1.0.5 MIT © 2023{" "}
+          V1.0.7 MIT © 2023{" "}
           <a href="https://github.com/AndyLeezard" target="_blank">
             Andy Lee 🔗
           </a>
