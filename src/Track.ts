@@ -171,16 +171,28 @@ class Track {
    * updates the track's mutable state properties
    */
   public updateState(value: Partial<T.MutTrackState>) {
-    const { autoPlay, loop, volume, muted, allowDuplicates } = value
+    const { autoPlay, allowDuplicates, locale, loop, muted, volume } = value
     const payload: Partial<T.MutTrackState> = {}
     if (typeof autoPlay === "boolean") {
       payload.autoPlay = autoPlay
       this.togglePlay(true)
     }
+    if (typeof allowDuplicates === "boolean") {
+      payload.allowDuplicates = allowDuplicates
+    }
+    if (typeof locale === "string") {
+      payload.locale = locale
+    }
     if (typeof loop === "boolean") {
       payload.loop = loop
       this.#Queue.forEach((item) => {
         item.setLoop(loop)
+      })
+    }
+    if (typeof muted === "boolean") {
+      payload.muted = muted
+      this.#Queue.forEach((item) => {
+        item.toggleMute(muted)
       })
     }
     if (typeof volume === "number") {
@@ -190,15 +202,6 @@ class Track {
           volume * (this.#getInheritedState()?.masterVolume ?? C.DEFAULT_VOLUME)
         )
       })
-    }
-    if (typeof muted === "boolean") {
-      payload.muted = muted
-      this.#Queue.forEach((item) => {
-        item.toggleMute(muted)
-      })
-    }
-    if (typeof allowDuplicates === "boolean") {
-      payload.allowDuplicates = allowDuplicates
     }
     this.#updateState(payload)
   }
@@ -229,6 +232,10 @@ class Track {
     } else {
       audioItem.pause()
     }
+  }
+
+  #getLocale(overrideLocale?: string, inheritedLocale?: string) {
+    return overrideLocale ?? this.#State.locale ?? inheritedLocale
   }
 
   #createAudio = (
@@ -263,7 +270,7 @@ class Track {
     audio.muted =
       muted ?? this.#State.muted ?? inhertiedAudioOptions.muted ?? false
     audio.loop = loop ?? this.#State.loop ?? inhertiedAudioOptions.loop ?? false
-    const _locale = locale ?? this.#State.locale ?? inhertiedAudioOptions.locale
+    const _locale = this.#getLocale(locale, inhertiedAudioOptions.locale)
     const _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
     const _subtitles =
       subtitles ??

@@ -274,7 +274,7 @@ export type MutTrackState = {
   autoPlay: boolean
   allowDuplicates: boolean
 
-  /** inherited from `AudiotrackManager`*/
+  /** locale for subtitles */
   locale: string | undefined
 }
 
