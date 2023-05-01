@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.7
+
+### Patch Changes
+
+- b79d4f7: Stability update: Automatically reconstruct tracks with inherited locale (and other default audio options) on creation
+
 ## 1.0.6
 
 ### Patch Changes
