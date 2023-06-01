@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.9
+
+### Patch Changes
+
+- 0a3e78d: Fixed omitted metadata bug related to registering play requests. Also added audio callbacks to play requests.
+
 ## 1.0.8
 
 ### Patch Changes
