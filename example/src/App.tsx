@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react"
 
 // Util
-import { getURLParam } from "./utils"
+import { getFileName, getURLParam } from "./utils"
 
 // Module
 import AudiotrackManager, { useAudiotracks } from "."
@@ -13,11 +13,11 @@ import * as Styled from "./UI"
 import TrackInterface from "./TrackInterface"
 import CaptionViewer from "./CaptionViewer"
 import Checkbox from "./Checkbox"
+import Footer from "./Footer"
 
 // react-icons
 import { GiDrumKit, GiGuitarBassHead, GiChopsticks } from "react-icons/gi"
-import { TbBrandNpm } from "react-icons/tb"
-import Footer from "./Footer"
+import AudioRequestHandler from "./audio-request-handler"
 
 const NUMBER_OF_TRACKS = 3
 
@@ -28,32 +28,33 @@ function App() {
   const state = useAudiotracks()
   const [targetTrackIdx, setTargetTrackIdx] = useState(0)
   const [globalAutoPlay, setGlobalAutoPlay] = useState(false)
+  const [requestMode, setRequestMode] = useState(false)
   const [globalLoop, setGlobalLoop] = useState(false)
   const [globalAllowDuplicates, setGlobalAllowDuplicates] = useState(false)
 
   useEffect(() => {
-    let track_length = getURLParam("t") || NUMBER_OF_TRACKS
-    if (typeof track_length === "string") {
-      track_length = Number(track_length)
-      if (isNaN(track_length)) {
+    let trackLength = getURLParam("t") || NUMBER_OF_TRACKS
+    if (typeof trackLength === "string") {
+      trackLength = Number(trackLength)
+      if (isNaN(trackLength)) {
         console.log(
           `invalid track length detected from URL (${getURLParam("t")})`
         )
-        track_length = NUMBER_OF_TRACKS
+        trackLength = NUMBER_OF_TRACKS
         console.log(
           `setting track length to fallback value (${NUMBER_OF_TRACKS})...`
         )
       } else {
-        track_length = Math.min(Math.max(0, track_length), MAX_NUMBER_OF_TRACKS)
-        console.log(`track length detected from URL (${track_length})`)
+        trackLength = Math.min(Math.max(0, trackLength), MAX_NUMBER_OF_TRACKS)
+        console.log(`track length detected from URL (${trackLength})`)
       }
     } else {
-      console.log(`Using default track length(${track_length})...`)
+      console.log(`Using default track length(${trackLength})...`)
     }
-    if (isNaN(track_length)) {
-      track_length = NUMBER_OF_TRACKS
+    if (isNaN(trackLength)) {
+      trackLength = NUMBER_OF_TRACKS
     } else {
-      console.log(`track length detected from URL (${track_length})`)
+      console.log(`track length detected from URL (${trackLength})`)
     }
     const mylocale = Intl.DateTimeFormat()
       .resolvedOptions()
@@ -61,7 +62,7 @@ function App() {
     AudiotrackManager.initialize({
       debug: import.meta.env.DEV || getURLParam("debug") === "true",
       subtitlesJSON: subtitles,
-      trackLength: track_length,
+      trackLength,
       masterVolume: 0.5,
       defaultAudioOptions: {
         locale: mylocale,
@@ -94,12 +95,36 @@ function App() {
   }, [state])
 
   const playDemo = (src: string) => {
-    AudiotrackManager.registerAudio(src, {
-      trackIdx: targetTrackIdx,
-      onPlay: () => console.log(`onPlay ${src}`),
-      onPause: () => console.log(`onPause ${src}`),
-      onEnd: () => console.log(`onEnd ${src}`),
-    })
+    if (requestMode) {
+      AudiotrackManager.registerPlayRequests([
+        {
+          src: src,
+          trackIdx: targetTrackIdx,
+          audioCallbacks: {
+            onPlay: () => console.log(`onPlay ${src}`),
+            onPause: () => console.log(`onPause ${src}`),
+            onEnd: () => console.log(`onEnd ${src}`),
+          },
+          /**
+           * Arbitrary Metadata that can be used to render a custom modal dialog
+           */
+          metadata: {
+            title: getFileName(src),
+            description: `Do you want to play ${getFileName(
+              src
+            )} on the track number ${targetTrackIdx}?`,
+            imgsrc: "image",
+          },
+        },
+      ])
+    } else {
+      AudiotrackManager.registerAudio(src, {
+        trackIdx: targetTrackIdx,
+        onPlay: () => console.log(`onPlay ${src}`),
+        onPause: () => console.log(`onPause ${src}`),
+        onEnd: () => console.log(`onEnd ${src}`),
+      })
+    }
   }
 
   return (
@@ -132,6 +157,11 @@ function App() {
             onChange={(checked) =>
               AudiotrackManager.updateAllTracks({ allowDuplicates: checked })
             }
+          />
+          <Checkbox
+            checked={requestMode}
+            label={"Request mode"}
+            onChange={(checked) => setRequestMode(checked)}
           />
         </div>
         <div style={{ display: "flex", alignSelf: "center", gap: "1rem" }}>
@@ -271,6 +301,7 @@ function App() {
         })}
         <Footer />
       </Styled.Container>
+      <AudioRequestHandler />
     </Styled.Wrapper>
   )
 }
