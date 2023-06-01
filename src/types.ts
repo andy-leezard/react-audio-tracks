@@ -56,12 +56,17 @@ export type Subtitle = {
   narrator?: string
 }
 
+/* callbacks */
 export type AudioCallbacks = {
-  /* callbacks */
+  /** Callback on play */
   onPlay?: () => void | undefined
+  /** Callback on audio update */
   onUpdate?: () => void | undefined
+  /** Callback on audio pause (use cases of hardware buttons) */
   onPause?: () => void | undefined
+  /** Callback on audio end */
   onEnd?: () => void | undefined
+  /** Callback on audio error */
   onError?: () => void | undefined
 }
 
@@ -163,6 +168,7 @@ export type PlayRequestConstructor = {
    */
   trackIdx: number
 
+  audioCallbacks?: AudioCallbacks
   audioOptions?: AudioOptions
   /**
    * Metadata that can be used to render a custom modal dialog

@@ -321,11 +321,39 @@ class AudiotrackManager {
         id: uid,
         src: arg.src,
         trackIdx: arg.trackIdx,
-        onAccept: () =>
+        metadata: arg.metadata,
+        onAccept: () => {
+          this.dismissPlayRequest(uid)
           this.registerAudio(arg.src, {
             ...arg?.audioOptions,
             trackIdx: arg.trackIdx,
-          }),
+            onPlay: () => {
+              if (arg.audioCallbacks?.onPlay) {
+                arg.audioCallbacks.onPlay()
+              }
+            },
+            onUpdate: () => {
+              if (arg.audioCallbacks?.onUpdate) {
+                arg.audioCallbacks.onUpdate()
+              }
+            },
+            onPause: () => {
+              if (arg.audioCallbacks?.onPause) {
+                arg.audioCallbacks.onPause()
+              }
+            },
+            onEnd: () => {
+              if (arg.audioCallbacks?.onEnd) {
+                arg.audioCallbacks.onEnd()
+              }
+            },
+            onError: () => {
+              if (arg.audioCallbacks?.onError) {
+                arg.audioCallbacks.onError()
+              }
+            },
+          })
+        },
         onReject: () => this.dismissPlayRequest(uid),
       }
       uids.push(uid)
