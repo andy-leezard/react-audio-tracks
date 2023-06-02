@@ -123,7 +123,29 @@ function App() {
         onPlay: () => console.log(`onPlay ${src}`),
         onPause: () => console.log(`onPause ${src}`),
         onEnd: () => console.log(`onEnd ${src}`),
-      })
+      }) 
+      /*
+       * Feature: Add multiple audios at once
+       * AudiotrackManager.registerAudios([
+        [
+          src,
+          {
+            trackIdx: targetTrackIdx,
+            onPlay: () => console.log(`onPlay1`),
+            onPause: () => console.log(`onPause1`),
+            onEnd: () => console.log(`onEnd1`),
+          },
+        ],
+        [
+          src,
+          {
+            trackIdx: targetTrackIdx,
+            onPlay: () => console.log(`onPlay2`),
+            onPause: () => console.log(`onPause2`),
+            onEnd: () => console.log(`onEnd2`),
+          },
+        ],
+      ]) */
     }
   }
 
