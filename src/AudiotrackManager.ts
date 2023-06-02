@@ -424,6 +424,14 @@ class AudiotrackManager {
     track.registerAudio(src, rest)
   }
 
+  public static registerAudios = (
+    args: Array<Parameters<typeof this.registerAudio>>
+  ) => {
+    args.forEach((audio) => {
+      this.registerAudio(audio[0], audio[1])
+    })
+  }
+
   /**
    * Plays once an audio source with or without options and callbacks.
    *
