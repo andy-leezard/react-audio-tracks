@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.0.10
+
+### Patch Changes
+
+- 0517bd5: Added feature: register multiple audios at once
+
 ## 1.0.9
 
 ### Patch Changes
