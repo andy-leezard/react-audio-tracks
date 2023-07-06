@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react"
 import { getFileName, getURLParam } from "./utils"
 
 // Module
-import AudiotrackManager, { useAudiotracks } from "."
+import { RATM, useAudiotracks } from "."
 // Module customization
 import subtitles from "./subtitles.json"
 
@@ -59,7 +59,7 @@ function App() {
     const mylocale = Intl.DateTimeFormat()
       .resolvedOptions()
       .locale.split("-")[0]!
-    AudiotrackManager.initialize({
+    RATM.initialize({
       debug: import.meta.env.DEV || getURLParam("debug") === "true",
       subtitlesJSON: subtitles,
       trackLength,
@@ -70,7 +70,7 @@ function App() {
       fallbackLocale: "en",
       supportedLocales: ["en", "fr", "ko"],
     })
-    AudiotrackManager.updateAllTracks({ autoPlay: true, allowDuplicates: true })
+    RATM.updateAllTracks({ autoPlay: true, allowDuplicates: true })
   }, [])
 
   useEffect(() => {
@@ -96,7 +96,7 @@ function App() {
 
   const playDemo = (src: string) => {
     if (requestMode) {
-      AudiotrackManager.registerPlayRequests([
+      RATM.registerPlayRequests([
         {
           src: src,
           trackIdx: targetTrackIdx,
@@ -118,15 +118,15 @@ function App() {
         },
       ])
     } else {
-      AudiotrackManager.registerAudio(src, {
+      RATM.registerAudio(src, {
         trackIdx: targetTrackIdx,
         onPlay: () => console.log(`onPlay ${src}`),
         onPause: () => console.log(`onPause ${src}`),
         onEnd: () => console.log(`onEnd ${src}`),
-      }) 
+      })
       /*
        * Feature: Add multiple audios at once
-       * AudiotrackManager.registerAudios([
+       * RATM.registerAudios([
         [
           src,
           {
@@ -157,27 +157,23 @@ function App() {
           <Checkbox
             checked={globalAutoPlay}
             label={"Auto Play"}
-            onChange={(checked) =>
-              AudiotrackManager.updateAllTracks({ autoPlay: checked })
-            }
+            onChange={(checked) => RATM.updateAllTracks({ autoPlay: checked })}
           />
           <Checkbox
             checked={state.globalMuted}
             label={"Global Muted"}
-            onChange={AudiotrackManager.toggleGlobalMute}
+            onChange={RATM.toggleGlobalMute}
           />
           <Checkbox
             checked={globalLoop}
             label={"Global Loop"}
-            onChange={(checked) =>
-              AudiotrackManager.updateAllTracks({ loop: checked })
-            }
+            onChange={(checked) => RATM.updateAllTracks({ loop: checked })}
           />
           <Checkbox
             checked={globalAllowDuplicates}
             label={"Allow Duplicates"}
             onChange={(checked) =>
-              AudiotrackManager.updateAllTracks({ allowDuplicates: checked })
+              RATM.updateAllTracks({ allowDuplicates: checked })
             }
           />
           <Checkbox
@@ -202,9 +198,7 @@ function App() {
               min={0}
               max={1}
               step={0.05}
-              onChange={(e) =>
-                AudiotrackManager.setMasterVolume(e.target.valueAsNumber)
-              }
+              onChange={(e) => RATM.setMasterVolume(e.target.valueAsNumber)}
             />
             <label htmlFor="checkbox">Global Volume</label>
           </div>
@@ -308,7 +302,7 @@ function App() {
         <Styled.Title>Captions</Styled.Title>
         <Styled.TrackLineInterface style={{ width: "100%" }}>
           <Styled.TrackIndex>Track #</Styled.TrackIndex>
-          <Styled.CaptionNarrator>Narrator</Styled.CaptionNarrator>
+          <Styled.CaptionNarrator>Metadata</Styled.CaptionNarrator>
           <Styled.CaptionDescription>Description</Styled.CaptionDescription>
           <Styled.CaptionText>Text</Styled.CaptionText>
         </Styled.TrackLineInterface>

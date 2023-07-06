@@ -1,4 +1,4 @@
-import AudiotrackManager, { useAudiotracks, useTrackStream } from "react-audio-tracks"
+import { RATM, useAudiotracks, useTrackStream } from "react-audio-tracks"
 import type {
   SubtitlesJSON,
   Subtitle,
@@ -16,8 +16,7 @@ import type {
   TrackStream,
 } from "react-audio-tracks"
 
-export default AudiotrackManager
-export { useAudiotracks, useTrackStream }
+export { RATM, useAudiotracks, useTrackStream }
 export type {
   SubtitlesJSON,
   Subtitle,

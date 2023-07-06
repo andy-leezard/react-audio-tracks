@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -9,8 +9,8 @@ dependencies:
     specifier: ^18.2.0
     version: 18.2.0
   react-audio-tracks:
-    specifier: ^1.0.9
-    version: 1.0.9
+    specifier: ^1.1.0
+    version: 1.1.0
   react-dom:
     specifier: ^18.2.0
     version: 18.2.0(react@18.2.0)
@@ -783,8 +783,8 @@ packages:
       source-map-js: 1.0.2
     dev: true
 
-  /react-audio-tracks@1.0.9:
-    resolution: {integrity: sha512-MuX54aEi/K0/F6l/W87GqpJpRi61xNYhX506l3EUpMKMeW23I/4BhR3ZIjR6rAl4EROz/FU6gsdoUQ0jVvUzGw==}
+  /react-audio-tracks@1.1.0:
+    resolution: {integrity: sha512-gdf3Y8mUiZrX3qAFuJ0fby99na0DKiUDAGRTCtR/1vUu0V3+S7F3kqysh1wZYFkm5wIGGv+VTkfsQER7dAPRRQ==}
     dependencies:
       react: 18.2.0
     dev: false

@@ -18,7 +18,7 @@ const CaptionViewer = ({ index, inheritState }: CaptionViewerProps) => {
     <UI.TrackLineContainer style={{ width: "100%" }} key={`state-${index}`}>
       <UI.TrackIndex>#{index}</UI.TrackIndex>
       <UI.CaptionNarrator>
-        {(stream.caption?.narrator ?? "") || "-"}
+        {(stream.caption?.metadata?.narrator ?? "") || "-"}
       </UI.CaptionNarrator>
       <UI.CaptionDescription>
         {(stream.caption?.description ?? "") || "-"}

@@ -3,7 +3,9 @@
     {
       "from": 0,
       "to": 2.795,
-      "narrator": "drummer",
+      "metadata": {
+        "narrator": "drummer"
+      },
       "description": {
         "en": "(Drumsticks sound)",
         "fr": "(Son des baguettes de tambour)",
@@ -20,7 +22,9 @@
     {
       "from": 0,
       "to": 5.333,
-      "narrator": "drummer",
+      "metadata": {
+        "narrator": "drummer"
+      },
       "description": {
         "en": "(Drums sound)",
         "fr": "(Son de batterie)",
@@ -35,7 +39,9 @@
     {
       "from": 0,
       "to": 10.667,
-      "narrator": "drummer",
+      "metadata": {
+        "narrator": "drummer"
+      },
       "description": {
         "en": "(Drums sound)",
         "fr": "(Son de batterie)",
@@ -52,7 +58,9 @@
     {
       "from": 0,
       "to": 5.333,
-      "narrator": "drummer",
+      "metadata": {
+        "narrator": "drummer"
+      },
       "description": {
         "en": "(Drums sound)",
         "fr": "(Son de batterie)",
@@ -67,7 +75,9 @@
     {
       "from": 0,
       "to": 10.667,
-      "narrator": "drummer",
+      "metadata": {
+        "narrator": "drummer"
+      },
       "description": {
         "en": "(Drums sound)",
         "fr": "(Son de batterie)",
@@ -84,7 +94,9 @@
     {
       "from": 0,
       "to": 10.667,
-      "narrator": "bassist",
+      "metadata": {
+        "narrator": "bassist"
+      },
       "description": {
         "en": "(Bass slapping)",
         "fr": "(Slap de basse)",
