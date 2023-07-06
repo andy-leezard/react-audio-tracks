@@ -1,5 +1,16 @@
 # react-audio-tracks
 
+## 1.1.0
+
+### Minor Changes
+
+- f6dd883: Default export changed into a named export (RATM). Also this version introduces the expandable real-time metadata updates (previously limited to 'narrator' metadata.)
+
+### Patch Changes
+
+- Updated dependencies [f6dd883]
+  - react-audio-tracks@1.1.0
+
 ## 1.0.10
 
 ### Patch Changes
