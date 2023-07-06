@@ -1,4 +1,4 @@
-lockfileVersion: '6.1'
+lockfileVersion: '6.0'
 
 settings:
   autoInstallPeers: true
@@ -8,9 +8,6 @@ dependencies:
   react:
     specifier: ^18.2.0
     version: 18.2.0
-  react-audio-tracks:
-    specifier: 1.0.10
-    version: 1.0.10
 
 devDependencies:
   '@changesets/cli':
@@ -1878,12 +1875,6 @@ packages:
     resolution: {integrity: sha512-ARhCpm70fzdcvNQfPoy49IaanKkTlRWF2JMzqhcJbhSFRZv7nPTvZJdcY7301IPmvW+/p0RgIWnQDLJxifsQ7g==}
     engines: {node: '>=8'}
     dev: true
-
-  /react-audio-tracks@1.0.10:
-    resolution: {integrity: sha512-6NUyTrOk6AsFmcVjN2udm0+DVk8i4jCSl0OvwgnkKYbvXVjrOHTfbCYc6wlgQ889pyD6cuuJetIer7qAHEcMeg==}
-    dependencies:
-      react: 18.2.0
-    dev: false
 
   /react@18.2.0:
     resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
