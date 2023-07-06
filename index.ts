@@ -1,4 +1,4 @@
-import AudiotrackManager, { useAudiotracks, useTrackStream } from "./src"
+import { RATM, useAudiotracks, useTrackStream } from "./src"
 import type {
   SubtitlesJSON,
   Subtitle,
@@ -16,8 +16,7 @@ import type {
   TrackStream,
 } from "./src"
 
-export default AudiotrackManager
-export { useAudiotracks, useTrackStream }
+export { RATM, useAudiotracks, useTrackStream }
 export type {
   SubtitlesJSON,
   Subtitle,

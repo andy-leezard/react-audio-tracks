@@ -3,6 +3,7 @@ import * as U from "./utils"
 import Track from "./Track"
 import type * as T from "./types"
 
+/** Export alias from index.ts: `RATM` (React Audio Track Manager) */
 class AudiotrackManager {
   /* MUTABLE CONFIGURATION */
   static #debug: boolean = false

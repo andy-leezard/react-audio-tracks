@@ -49,11 +49,9 @@ export type Subtitle = {
         [langID: string]: string
       }
   /**
-   * Extra metadata: Description of the source of audio
-   *
-   * Example: 'Person with a white hat'
+   * Extra metadata based on the timeline of the audio
    */
-  narrator?: string
+  metadata?: Record<string, any>
 }
 
 /* callbacks */
@@ -149,15 +147,14 @@ export type CaptionState = {
    *  Example: "Footsteps approaching"
    */
   description?: string
-
+  
   /**
-   * Extra metadata: Description of the source of audio
-   *
+   * Extra metadata based on the timeline of the audio
+   * 
    * This has to be given in the subtitles option.
-   *
-   * Example: 'Person with a white hat'
+   * 
    */
-  narrator?: string
+  metadata?: Record<string, any>
 }
 
 export type PlayRequestConstructor = {

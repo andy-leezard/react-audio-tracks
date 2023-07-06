@@ -13,13 +13,13 @@
 
 # Example
 
-Initialize `AudiotrackManager` class with parameters.
+Initialize the main class `RATM` (React Audio Track Manager) with parameters.
 
 ```javascript
-import AudiotrackManager from "react-audio-tracks"
+import { RATM } from "react-audio-tracks"
 import Subtitles from "./Subtitles.json"
 
-AudiotrackManager.initialize({
+RATM.initialize({
   debug: true,
   subtitlesJSON: Subtitles,
   trackLength: 3,
@@ -32,14 +32,15 @@ AudiotrackManager.initialize({
 })
 
 //recommended settings for tracks
-AudiotrackManager.updateAllTracks({ autoPlay: true, allowDuplicates: true })
+RATM.updateAllTracks({ autoPlay: true, allowDuplicates: true })
 ```
 
 Example using the custom react hook
 
 ```javascript
 import React, { useEffect, useRef } from "react"
-import AudiotrackManager, {
+import {
+  RATM,
   useAudiotracks,
   useTrackStream,
 } from "react-audio-tracks"
@@ -107,8 +108,8 @@ const TestScreen = () => {
   }, [stream])
 
   const loopAudioOnTrack0 = () => {
-    AudiotrackManager.purgeTrack(0)
-    AudiotrackManager.registerAudio("/audios/drumline1.mp3", {
+    RATM.purgeTrack(0)
+    RATM.registerAudio("/audios/drumline1.mp3", {
       trackIdx: 0,
       onPlay: () => {
         console.log("Drumline part 1 started")
@@ -117,7 +118,7 @@ const TestScreen = () => {
         console.log("Drumline part 1 ended")
       },
     })
-    AudiotrackManager.registerAudio("/audios/drumline2.mp3", {
+    RATM.registerAudio("/audios/drumline2.mp3", {
       trackIdx: 0,
       loop: true,
       onPlay: () => {
@@ -127,7 +128,7 @@ const TestScreen = () => {
   }
 
   const playAudioOnTrack1 = () => {
-    AudiotrackManager.registerAudio("/audios/bassline1.mp3", {
+    RATM.registerAudio("/audios/bassline1.mp3", {
       trackIdx: 1,
       onEnd: () => {
         console.log("Bassline ended")
@@ -137,7 +138,7 @@ const TestScreen = () => {
 
   const playWithoutTrack = () => {
     // not assigning any tracks
-    const audio: HTMLAudioElement = AudiotrackManager.playAudio(
+    const audio: HTMLAudioElement = RATM.playAudio(
       "/audios/guitar1.mp3",
       {
         onEnd: () => {
@@ -171,7 +172,7 @@ const TestScreen = () => {
     }
   }
 
-  const changemasterVolume = AudiotrackManager.setMasterVolume
+  const changemasterVolume = RATM.setMasterVolume
 
   return <></>
 }

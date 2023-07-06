@@ -1,6 +1,5 @@
 import useAudiotracks from "./useAudiotracks"
 import useTrackStream from "./useTrackStream"
-import AudiotrackManager from "./AudiotrackManager"
 import type {
   SubtitlesJSON,
   Subtitle,
@@ -18,7 +17,7 @@ import type {
   TrackStream,
 } from "./types"
 
-export default AudiotrackManager
+export { default as RATM } from "./AudiotrackManager"
 export { useAudiotracks, useTrackStream }
 export type {
   SubtitlesJSON,

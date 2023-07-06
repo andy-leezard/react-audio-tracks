@@ -23,8 +23,8 @@ const getCurrentCaption = (
         crnt.text = text
       } else if (locale && Object.prototype.hasOwnProperty.call(text, locale)) {
         crnt = { ...crnt, text: text[locale]! }
-        if (subtitle.narrator) {
-          crnt.narrator = subtitle.narrator
+        if (subtitle.metadata) {
+          crnt.metadata = subtitle.metadata
         }
       }
       if (description) {
