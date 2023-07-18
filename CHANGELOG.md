@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.1.1
+
+### Patch Changes
+
+- 0c63ac7: New track method: `isPlaying()` and `pauseTrack()` which is a shortcut of `getState().isPlaying` and `togglePlay(false)`. Also clarified the ts docs for `togglePlay()` method.
+
 ## 1.1.0
 
 ### Minor Changes
