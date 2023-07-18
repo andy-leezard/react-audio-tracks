@@ -161,6 +161,10 @@ class Track {
     return this.#State.queue[1]
   }
 
+  isPlaying() {
+    return this.#State.isPlaying
+  }
+
   #updateState(value?: Partial<T.TrackState>) {
     const prev = this.#State
     const newState = { ...prev, ...value }
@@ -207,7 +211,7 @@ class Track {
   }
 
   /**
-   * Will resume the track only if it has a currently playing audio that has been paused.
+   * Will resume the track ONLY IF it has a currently playing audio that has been paused.
    */
   resumeTrack() {
     if (!this.#Queue.length) return
@@ -217,21 +221,38 @@ class Track {
   }
 
   /**
-   * @param override if true : always triggers `audioItem.play()`.
+   * @param override
+   * if true : always triggers `audioItem.play()`.
+   * 
+   * if false : always triggers `audioItem.pause()`.
+   * 
+   * Consider using `pauseTrack()` and `resumeTrack()` for most use cases.
    */
   togglePlay(override?: boolean) {
     if (!this.#Queue.length) return
     const audioItem = this.#Queue[0]
     if (!audioItem) return
-    if (
-      override ||
-      audioItem?.getState().paused ||
-      !audioItem?.getState().started
-    ) {
-      audioItem.play()
-    } else {
-      audioItem.pause()
+    if (typeof override === "boolean") {
+      if (override) {
+        audioItem.play()
+      } else {
+        audioItem.pause()
+      }
+      return
     }
+    /** is playing */
+    if (!audioItem?.getState().paused && audioItem?.getState().started) {
+      audioItem.pause()
+    } else {
+      audioItem.play()
+    }
+  }
+
+  /**
+   * Pause current audio if is playing
+   */
+  pauseTrack() {
+    this.togglePlay(false)
   }
 
   #getLocale(overrideLocale?: string, inheritedLocale?: string) {
