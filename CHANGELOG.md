@@ -1,5 +1,12 @@
 # react-audio-tracks
 
+## 1.2.0
+
+### Minor Changes
+
+- 1d2a29f: Better support parameter types for `registerAudio` and `registerAudios` method.
+  Breaking change: the parameter for registerAudios has changed from one array of arguments to the enumerated classic list of arguments for flexibility and readibility.
+
 ## 1.1.1
 
 ### Patch Changes
