@@ -396,13 +396,8 @@ class AudiotrackManager {
    * For more and subtitles related information, see the documentation of the type `AudioOptions`.
    *
    */
-  public static registerAudio = (
-    src: string,
-    options?: T.AudioCallbacks &
-      T.AudioOptions & {
-        trackIdx?: number
-      }
-  ) => {
+  public static registerAudio = (...args: T.RegistrationArgTuple) => {
+    const [src, options] = args
     let { trackIdx, ...rest } = options ?? {}
     if (typeof trackIdx !== "number") {
       trackIdx =
@@ -425,9 +420,7 @@ class AudiotrackManager {
     track.registerAudio(src, rest)
   }
 
-  public static registerAudios = (
-    args: Array<Parameters<typeof this.registerAudio>>
-  ) => {
+  public static registerAudios = (...args: Array<T.RegistrationArgTuple>) => {
     args.forEach((audio) => {
       this.registerAudio(audio[0], audio[1])
     })

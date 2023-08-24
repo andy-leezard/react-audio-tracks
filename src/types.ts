@@ -147,12 +147,12 @@ export type CaptionState = {
    *  Example: "Footsteps approaching"
    */
   description?: string
-  
+
   /**
    * Extra metadata based on the timeline of the audio
-   * 
+   *
    * This has to be given in the subtitles option.
-   * 
+   *
    */
   metadata?: Record<string, any>
 }
@@ -332,3 +332,12 @@ export type StreamOptions = {
    */
   disabled?: boolean
 }
+
+/** Used as an argument tuple for `registerAudio` and `registerAudios` */
+export type RegistrationArgTuple = [
+  src: string,
+  options?: AudioCallbacks &
+    AudioOptions & {
+      trackIdx?: number
+    }
+]
