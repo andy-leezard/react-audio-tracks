@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.2.2
+
+### Patch Changes
+
+- 578d7d4: Fix type export: RegistrationArgTuple
+
 ## 1.2.1
 
 ### Patch Changes
