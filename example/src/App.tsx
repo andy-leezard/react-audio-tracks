@@ -282,6 +282,7 @@ function App() {
           <Styled.TrackQueue>Queued</Styled.TrackQueue>
           <Styled.TrackMute>Muted</Styled.TrackMute>
           <Styled.Width70>Vol</Styled.Width70>
+          <Styled.Width70>Speed</Styled.Width70>
           <Styled.Width70>Looping</Styled.Width70>
           <Styled.Width70>AutoPlay</Styled.Width70>
           <Styled.TrackPlayState>State</Styled.TrackPlayState>
@@ -317,6 +318,44 @@ function App() {
         })}
         <Footer />
       </Styled.Container>
+      <button
+        style={{
+          position: "fixed",
+          top: "50px",
+          left: "50%",
+          translate: "-50%",
+        }}
+        onClick={() =>
+          RATM.registerAudios(
+            [
+              "/audiosrc/intro.mp3",
+              {
+                onEnd: () => console.log("1"),
+              },
+            ],
+            [
+              "/audiosrc/drumbeat_90bpm.wav",
+              {
+                onEnd: () => console.log("2"),
+              },
+            ],
+            [
+              "/audiosrc/drumbeat2_90bpm.wav",
+              {
+                onEnd: () => console.log("3"),
+              },
+            ],
+            [
+              "/audiosrc/bass_loop_90bpm_got_to_be_real.mp3",
+              {
+                onEnd: () => console.log("4"),
+              },
+            ]
+          )
+        }
+      >
+        test
+      </button>
       <AudioRequestHandler />
     </Styled.Wrapper>
   )

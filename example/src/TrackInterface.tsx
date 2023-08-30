@@ -86,6 +86,21 @@ const TrackInterface = ({ index, inheritState }: TrackInterfaceProps) => {
           }}
         />
       </UI.Width70>
+      <UI.Width70>
+        <input
+          type="range"
+          style={{ width: "60px" }}
+          value={inheritState.playbackRate}
+          min={0.25}
+          max={2}
+          step={0.05}
+          onChange={(e) => {
+            instance.updateState({
+              playbackRate: e.target.valueAsNumber,
+            })
+          }}
+        />
+      </UI.Width70>
       <UI.Width70Interactable
         onClick={() => {
           instance.updateState({

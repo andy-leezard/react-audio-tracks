@@ -28,7 +28,7 @@ const Footer = (props: Props) => {
           alignSelf: "center",
         }}
       >
-        V1.2.0 MIT © 2023{" "}
+        V1.2.1 MIT © 2023{" "}
         <a href="https://github.com/AndyLeezard" target="_blank">
           Andy Lee 🔗
         </a>
