@@ -15,6 +15,7 @@ import type {
   AudioItemState,
   InnerAudioState,
   TrackStream,
+  RegistrationArgTuple,
 } from "./types"
 
 export { default as RATM } from "./AudiotrackManager"
@@ -34,4 +35,5 @@ export type {
   AudioItemState,
   InnerAudioState,
   TrackStream,
+  RegistrationArgTuple,
 }
