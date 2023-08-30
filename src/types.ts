@@ -84,6 +84,8 @@ export type AudioOptions = {
 
   loop?: boolean
 
+  playbackRate?: number
+
   // internationalization of subtitles
   locale?: string | undefined
 
@@ -276,6 +278,7 @@ export type MutTrackState = {
   loop: boolean
   autoPlay: boolean
   allowDuplicates: boolean
+  playbackRate: number
 
   /** locale for subtitles */
   locale: string | undefined

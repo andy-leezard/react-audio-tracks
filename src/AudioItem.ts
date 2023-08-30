@@ -163,6 +163,11 @@ class AudioItem {
     if (!this.#innerAudio) return
     this.#innerAudio.volume = level
   }
+
+  public setPlaybackRate(level: number) {
+    if (!this.#innerAudio) return
+    this.#innerAudio.playbackRate = level
+  }
 }
 
 export default AudioItem

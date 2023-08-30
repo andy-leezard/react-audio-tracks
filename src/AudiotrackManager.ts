@@ -434,10 +434,7 @@ class AudiotrackManager {
   public static playAudio = (
     src: string,
     options?: T.AudioCallbacks &
-      Pick<T.AudioOptions, "volume"> & {
-        muted?: boolean
-        loop?: boolean
-      }
+      Pick<T.AudioOptions, "volume" | "muted" | "loop" | "playbackRate">
   ): HTMLAudioElement => {
     const audio = new Audio(src)
     audio.muted = Boolean(options?.muted)

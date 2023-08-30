@@ -20,6 +20,7 @@ class Track {
     muted: false,
     loop: false,
     autoPlay: false,
+    playbackRate: 1,
     allowDuplicates: false,
     locale: undefined,
   }
@@ -175,7 +176,15 @@ class Track {
    * updates the track's mutable state properties
    */
   public updateState(value: Partial<T.MutTrackState>) {
-    const { autoPlay, allowDuplicates, locale, loop, muted, volume } = value
+    const {
+      autoPlay,
+      allowDuplicates,
+      locale,
+      loop,
+      muted,
+      volume,
+      playbackRate,
+    } = value
     const payload: Partial<T.MutTrackState> = {}
     if (typeof autoPlay === "boolean") {
       payload.autoPlay = autoPlay
@@ -207,6 +216,12 @@ class Track {
         )
       })
     }
+    if (typeof playbackRate === "number") {
+      payload.playbackRate = playbackRate
+      this.#Queue.forEach((item) => {
+        item.setPlaybackRate(playbackRate)
+      })
+    }
     this.#updateState(payload)
   }
 
@@ -223,9 +238,9 @@ class Track {
   /**
    * @param override
    * if true : always triggers `audioItem.play()`.
-   * 
+   *
    * if false : always triggers `audioItem.pause()`.
-   * 
+   *
    * Consider using `pauseTrack()` and `resumeTrack()` for most use cases.
    */
   togglePlay(override?: boolean) {
@@ -269,6 +284,7 @@ class Track {
       loop,
       muted,
       locale,
+      playbackRate,
       keyForSubtitles,
       subtitles,
       originalFilename,
@@ -291,6 +307,11 @@ class Track {
     audio.muted =
       muted ?? this.#State.muted ?? inhertiedAudioOptions.muted ?? false
     audio.loop = loop ?? this.#State.loop ?? inhertiedAudioOptions.loop ?? false
+    audio.playbackRate =
+      playbackRate ??
+      this.#State.playbackRate ??
+      inhertiedAudioOptions.playbackRate ??
+      1
     const _locale = this.#getLocale(locale, inhertiedAudioOptions.locale)
     const _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
     const _subtitles =
@@ -437,7 +458,6 @@ class Track {
         _priority = 1
         skipCurrent = true
       }
-      // ANCHOR
       this.#injectToQueue(_priority, audioItem)
       if (skipCurrent) {
         this.skipAudio()
@@ -560,7 +580,8 @@ class Track {
    * @returns a subset of the inherited mutable state to override the current state
    */
   #getReconstructor() {
-    const { volume, muted, loop, locale } = this.#getInheritedAudioOptions()
+    const { volume, muted, loop, locale, playbackRate } =
+      this.#getInheritedAudioOptions()
     const subset: Partial<T.TrackState> = {}
     if (typeof volume === "number") {
       subset.volume = volume
@@ -573,6 +594,9 @@ class Track {
     }
     if (typeof locale === "string") {
       subset.locale = locale
+    }
+    if (typeof playbackRate === "number") {
+      subset.playbackRate = playbackRate
     }
     return subset
   }
