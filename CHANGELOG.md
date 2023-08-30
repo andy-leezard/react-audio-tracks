@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.2.1
+
+### Patch Changes
+
+- c7527b7: Add feature: control individual tracks' playback rate value
+
 ## 1.2.0
 
 ### Minor Changes
