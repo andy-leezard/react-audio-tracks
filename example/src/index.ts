@@ -14,6 +14,7 @@ import type {
   AudioItemState,
   InnerAudioState,
   TrackStream,
+  RegistrationArgTuple,
 } from "react-audio-tracks"
 
 export { RATM, useAudiotracks, useTrackStream }
@@ -32,4 +33,5 @@ export type {
   AudioItemState,
   InnerAudioState,
   TrackStream,
+  RegistrationArgTuple,
 }
