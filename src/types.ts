@@ -58,14 +58,19 @@ export type Subtitle = {
 export type AudioCallbacks = {
   /** Callback on play */
   onPlay?: () => void | undefined
+  /** Callback on play, ONLY once */
+  // TODO: Implement this
+  /* onFirstPlay?: () => void | undefined */
   /** Callback on audio update */
   onUpdate?: () => void | undefined
   /** Callback on audio pause (use cases of hardware buttons) */
   onPause?: () => void | undefined
-  /** Callback on audio end */
+  /** Callback on audio end, runs either if the audio was successfully played or was interrupted by an error */
   onEnd?: () => void | undefined
+  /** Callback on audio end, runs only if the audio was successfully played */
+  onResolve?: () => void | undefined
   /** Callback on audio error */
-  onError?: () => void | undefined
+  onError?: (e: ErrorEvent) => void | undefined
 }
 
 // export type AudioCallback<K extends keyof AudioCallbacks> = AudioCallbacks[K]
@@ -128,6 +133,17 @@ export type AudioOptions = {
    * In case this metadata matters (for subtitles), you can specify it.
    */
   originalFilename?: string
+
+  /**
+   * The timeupdate event is fired when the time indicated by the currentTime attribute has been updated.
+   *
+   * In most browsers, this event is fired between 4 to 66 times per second (every 250 to 15 milliseconds), depending on the system load and the browser's internal scheduling.
+   *
+   * This frequency is generally adequate for most use cases. However, in old devices, the frequency may be too slow and there might be lags.
+   *
+   * In that case, set this value manually (generally recommended: 50).
+   */
+  updateFrequencyMs?: number
 
   /**
    * @deprecated Use `Track.loop` instead.
@@ -272,16 +288,16 @@ export type AudiotrackManagerSettings = {
   readonly supportedLocales: string[]
 }
 
-export type MutTrackState = {
-  volume: number
-  muted: boolean
-  loop: boolean
-  autoPlay: boolean
-  allowDuplicates: boolean
-  playbackRate: number
+export type InheritedTrackState = Required<
+  Pick<
+    AudioOptions,
+    "volume" | "muted" | "loop" | "allowDuplicates" | "playbackRate"
+  >
+> &
+  Pick<AudioOptions, "locale" | "updateFrequencyMs">
 
-  /** locale for subtitles */
-  locale: string | undefined
+export type MutTrackState = InheritedTrackState & {
+  autoPlay: boolean
 }
 
 export type TrackState = MutTrackState & {
@@ -297,6 +313,7 @@ export type AudioItemState = {
   readonly paused: boolean
   readonly ended: boolean
   readonly started: boolean
+  readonly updateFrequencyMs: number | undefined
 }
 
 export type InnerAudioState = {
@@ -310,6 +327,8 @@ export type InnerAudioState = {
 }
 
 export type TrackStream = {
+  /** Shortcut of `trackInstance.getState().isPlaying` */
+  readonly trackIsPlaying: boolean
   readonly audioItemState: AudioItemState | null
   caption: CaptionState | null
   readonly innerAudioState: InnerAudioState | null

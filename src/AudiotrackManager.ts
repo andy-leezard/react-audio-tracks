@@ -95,7 +95,7 @@ class AudiotrackManager {
     }
     this.setConfiguration(rest, true)
     this.#Tracks.forEach((track) => {
-      track.reconstruct()
+      track.reconstruct(this.#defaultAudioOptions)
     })
   }
 
@@ -106,7 +106,6 @@ class AudiotrackManager {
           debug: this.#debug,
           index: i,
           getInheritedState: () => this.#state,
-          getInheritedAudioOptions: () => this.#defaultAudioOptions,
           updateTrackCallback: (trackState: T.TrackState) => {
             this.#updateTrackState(i, trackState)
           },
@@ -141,7 +140,6 @@ class AudiotrackManager {
 
   static set #Tracks(value: Track[]) {
     this.#tracks = value
-    console.log(`tracks are ${value}`)
     this.#updateState({ tracks: this.#tracks.map((track) => track.getState()) })
   }
 
@@ -348,9 +346,9 @@ class AudiotrackManager {
                 arg.audioCallbacks.onEnd()
               }
             },
-            onError: () => {
+            onError: (e: ErrorEvent) => {
               if (arg.audioCallbacks?.onError) {
-                arg.audioCallbacks.onError()
+                arg.audioCallbacks.onError(e)
               }
             },
           })
@@ -458,15 +456,18 @@ class AudiotrackManager {
         options.onUpdate()
       }
     }
-    const onError = () => {
+    const onError = (e: ErrorEvent) => {
       if (options?.onError) {
-        options.onError()
+        options.onError(e)
       }
     }
     const onEnd = () => {
       cleanup()
       if (options?.onEnd) {
         options.onEnd()
+      }
+      if (options?.onResolve) {
+        options.onResolve()
       }
     }
     const cleanup = () => {

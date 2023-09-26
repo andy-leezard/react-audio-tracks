@@ -6,10 +6,12 @@ class AudioItem {
   #filename = ""
   #src = ""
   #innerAudio: HTMLAudioElement | null = null
+  #updateFrequencyMs: number | undefined = undefined
+  #interval: ReturnType<typeof setInterval> | null = null
   #onPlay: () => void = () => {}
   #onPause: () => void = () => {}
   #onEnd: () => void = () => {}
-  #onError: () => void = () => {}
+  #onError: (e: ErrorEvent) => void = () => {}
   #onUpdate: () => void = () => {}
   removeAllListeners: () => void = () => {}
 
@@ -18,20 +20,18 @@ class AudioItem {
   #ended = false
 
   constructor(
-    parameters: Pick<T.AudioItemState, "id" | "src" | "filename"> & {
-      debug: boolean
-      innerAudio: HTMLAudioElement
+    parameters: Pick<T.AudioItemState, "id" | "src" | "filename"> &
+      Required<Omit<T.AudioCallbacks, "onPlay">> &
+      Pick<T.AudioOptions, "updateFrequencyMs"> & {
+        debug: boolean
+        innerAudio: HTMLAudioElement
 
-      id: string
-      src: string
-      filename: string
+        id: string
+        src: string
+        filename: string
 
-      onPlay: (firstRun: boolean) => void
-      onPause: () => void
-      onEnd: () => void
-      onError: () => void
-      onUpdate: () => void
-    }
+        onPlay: (firstRun: boolean) => void
+      }
   ) {
     const {
       debug,
@@ -39,12 +39,15 @@ class AudioItem {
       id,
       filename,
       src,
+      updateFrequencyMs,
       onPlay,
       onPause,
       onEnd,
+      onResolve,
       onError,
       onUpdate,
     } = parameters
+    this.#updateFrequencyMs = updateFrequencyMs
     this.#debug = debug
     this.#id = id
     this.#filename = filename
@@ -55,23 +58,29 @@ class AudioItem {
       if (!this.#started) {
         this.#started = true
       }
+      this.#loopUpdate()
     }
     this.#onPause = () => {
       this.#paused = true
       onPause()
     }
-    this.#onError = () => {
+    this.#onError = (e: ErrorEvent) => {
       this.#ended = true
-      onError()
+      this.removeAllListeners()
+      onError(e)
       onEnd()
     }
-    this.#onUpdate = () => {
-      onUpdate()
+    this.#onUpdate = (e?: Event) => {
+      // if updateFrequencyMs is manually given, ignore the native event
+      if ((this.#updateFrequencyMs && !e) || (!this.#updateFrequencyMs && e)) {
+        onUpdate()
+      }
     }
     this.#onEnd = () => {
       this.#ended = true
       this.removeAllListeners()
       onEnd()
+      onResolve()
     }
     this.removeAllListeners = () => {
       innerAudio.removeEventListener("play", this.#onPlay)
@@ -91,6 +100,15 @@ class AudioItem {
     this.#innerAudio = innerAudio
   }
 
+  get #UpdateFrequencyMs() {
+    return this.#updateFrequencyMs
+  }
+
+  set #UpdateFrequencyMs(value: number | undefined) {
+    this.#updateFrequencyMs = value
+    this.#loopUpdate()
+  }
+
   public idEqualTo(id: string) {
     return this.#id === id
   }
@@ -107,6 +125,7 @@ class AudioItem {
       paused: this.#paused,
       ended: this.#ended,
       started: this.#started,
+      updateFrequencyMs: this.#updateFrequencyMs,
     }
   }
 
@@ -120,6 +139,39 @@ class AudioItem {
       paused: this.#innerAudio.paused,
       playbackRate: this.#innerAudio.playbackRate,
       preservesPitch: this.#innerAudio.preservesPitch,
+    }
+  }
+
+  /** According to `this.#updateFrequencyMs` */
+  #loopUpdate() {
+    const frequency =
+      this.#updateFrequencyMs && this.#updateFrequencyMs > 0
+        ? Math.round(this.#updateFrequencyMs)
+        : undefined
+    if (!this.#started) return
+    if (frequency) {
+      if (this.#interval) {
+        clearInterval(this.#interval)
+      }
+      this.#interval = setInterval(() => {
+        const frequencyIsStillValid =
+          this.#updateFrequencyMs && this.#updateFrequencyMs > 0
+        if (
+          this.#interval &&
+          (!this.#innerAudio ||
+            this.#paused ||
+            this.#ended ||
+            !frequencyIsStillValid)
+        ) {
+          clearInterval(this.#interval)
+          return
+        }
+        if (this.#innerAudio) {
+          this.#onUpdate()
+        }
+      }, frequency)
+    } else if (this.#interval) {
+      clearInterval(this.#interval)
     }
   }
 
@@ -167,6 +219,10 @@ class AudioItem {
   public setPlaybackRate(level: number) {
     if (!this.#innerAudio) return
     this.#innerAudio.playbackRate = level
+  }
+
+  public setFrequencyMs(frequencyMs: number | undefined) {
+    this.#UpdateFrequencyMs = frequencyMs
   }
 }
 

@@ -23,10 +23,12 @@ class Track {
     playbackRate: 1,
     allowDuplicates: false,
     locale: undefined,
+    updateFrequencyMs: undefined,
   }
   private state_listeners: T.Listener<T.TrackState>[] = []
 
   #stream: T.TrackStream = {
+    trackIsPlaying: false,
     audioItemState: null,
     caption: null,
     innerAudioState: null,
@@ -40,7 +42,6 @@ class Track {
       index: number
       name?: string
       getInheritedState: () => T.AudiotrackManagerState
-      getInheritedAudioOptions: () => T.AudioOptions & { trackIdx?: number }
       updateTrackCallback: (trackState: T.TrackState) => void
     }
   ) {
@@ -50,22 +51,14 @@ class Track {
       name,
       getInheritedState,
       updateTrackCallback,
-      getInheritedAudioOptions,
-      ...rest
+      ...partialMutTrackState
     } = args
     this.debug = debug
     this.#index = index
     this.#name = name ?? `Track #${index}`
     this.#getInheritedState = getInheritedState
     this.updateTrackCallback = updateTrackCallback
-    this.#getInheritedAudioOptions = () => {
-      const { trackIdx, ...rest } = getInheritedAudioOptions()
-      return rest
-    }
-    Object.assign(this.#state, {
-      ...this.#getReconstructor(),
-      ...rest,
-    })
+    Object.assign(this.#state, partialMutTrackState)
   }
 
   public getState(): T.TrackState {
@@ -94,6 +87,7 @@ class Track {
     if (!hasItem) {
       Statepayload.isPlaying = false
       this.#updateStream({
+        trackIsPlaying: false,
         caption: null,
         audioItemState: null,
         innerAudioState: null,
@@ -101,6 +95,7 @@ class Track {
     } else if (!this.#State.autoPlay) {
       Statepayload.isPlaying = false
       this.#updateStream({
+        trackIsPlaying: false,
         audioItemState: this.#queue[0]?.getState() ?? null,
         innerAudioState: this.#queue[0]?.getInnerAudioState() ?? null,
       })
@@ -222,6 +217,12 @@ class Track {
         item.setPlaybackRate(playbackRate)
       })
     }
+    if ("updateFrequencyMs" in value) {
+      payload.updateFrequencyMs = value.updateFrequencyMs
+      this.#Queue.forEach((item) => {
+        item.setFrequencyMs(value.updateFrequencyMs)
+      })
+    }
     this.#updateState(payload)
   }
 
@@ -288,10 +289,12 @@ class Track {
       keyForSubtitles,
       subtitles,
       originalFilename,
+      updateFrequencyMs,
       onPlay,
       onUpdate,
       onPause,
       onEnd,
+      onResolve,
       onError,
     } = audioOptions
     const inhertiedAudioOptions = this.#getInheritedAudioOptions()
@@ -328,11 +331,13 @@ class Track {
       id: uid,
       src: src,
       filename: originalFilename ?? filename,
+      updateFrequencyMs: updateFrequencyMs ?? this.#State.updateFrequencyMs,
       onPlay: (firstRun: boolean) => {
         if (firstRun && onPlay) {
           onPlay()
         }
         const payload: Partial<T.TrackStream> = {
+          trackIsPlaying: true,
           audioItemState: audioItem.getState(),
           innerAudioState: audioItem.getInnerAudioState(),
         }
@@ -369,6 +374,7 @@ class Track {
           isPlaying: false,
         })
         this.#updateStream({
+          trackIsPlaying: false,
           audioItemState: audioItem.getState(),
           innerAudioState: audioItem.getInnerAudioState(),
         })
@@ -384,9 +390,14 @@ class Track {
           caption: null,
         })
       },
-      onError: () => {
+      onResolve: () => {
+        if (onResolve) {
+          onResolve()
+        }
+      },
+      onError: (e: ErrorEvent) => {
         if (onError) {
-          onError()
+          onError(e)
         }
         if (onEnd) {
           onEnd()
@@ -577,11 +588,12 @@ class Track {
   }
 
   /**
-   * @returns a subset of the inherited mutable state to override the current state
+   * Re-construct its state from `AudiotrackManager` after a global audio options or locale change.
+   * This will inherit and overwrite all applicable audio options.
    */
-  #getReconstructor() {
-    const { volume, muted, loop, locale, playbackRate } =
-      this.#getInheritedAudioOptions()
+  reconstruct(payload: Partial<T.TrackState>) {
+    const { volume, muted, loop, locale, playbackRate, updateFrequencyMs } =
+      payload
     const subset: Partial<T.TrackState> = {}
     if (typeof volume === "number") {
       subset.volume = volume
@@ -598,15 +610,9 @@ class Track {
     if (typeof playbackRate === "number") {
       subset.playbackRate = playbackRate
     }
-    return subset
-  }
-
-  /**
-   * Re-construct its state from `AudiotrackManager` after a global audio options or locale change.
-   * This will inherit and overwrite all applicable audio options.
-   */
-  reconstruct() {
-    this.#updateState(this.#getReconstructor())
+    subset.updateFrequencyMs = updateFrequencyMs
+    console.log(payload)
+    this.#updateState(subset)
   }
 }
 
