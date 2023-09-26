@@ -19,6 +19,9 @@ import Footer from "./Footer"
 import { GiDrumKit, GiGuitarBassHead, GiChopsticks } from "react-icons/gi"
 import AudioRequestHandler from "./audio-request-handler"
 
+// Assets
+import * as AudioAssets from "./assets"
+
 const NUMBER_OF_TRACKS = 3
 
 // This is not systematic. Only for demo purposes.
@@ -103,6 +106,7 @@ function App() {
           audioCallbacks: {
             onPlay: () => console.log(`onPlay ${src}`),
             onPause: () => console.log(`onPause ${src}`),
+            onUpdate: () => console.log(`onUpdate`),
             onEnd: () => console.log(`onEnd ${src}`),
           },
           /**
@@ -122,6 +126,8 @@ function App() {
         trackIdx: targetTrackIdx,
         onPlay: () => console.log(`onPlay ${src}`),
         onPause: () => console.log(`onPause ${src}`),
+        onUpdate: () => console.log(`onUpdate`),
+        // onResolve: () => console.log("resolved"),
         onEnd: () => console.log(`onEnd ${src}`),
       })
       /*
@@ -237,7 +243,7 @@ function App() {
             <button
               type="button"
               style={{ padding: "0.25rem" }}
-              onClick={() => playDemo("/audiosrc/intro.mp3")}
+              onClick={() => playDemo(AudioAssets.Intro)}
             >
               <GiChopsticks size={36} />
             </button>
@@ -247,7 +253,7 @@ function App() {
             <button
               type="button"
               style={{ padding: "0.25rem" }}
-              onClick={() => playDemo("/audiosrc/drumbeat_90bpm.wav")}
+              onClick={() => playDemo(AudioAssets.DrumBeat1)}
             >
               <GiDrumKit size={36} />
             </button>
@@ -257,7 +263,7 @@ function App() {
             <button
               type="button"
               style={{ padding: "0.25rem" }}
-              onClick={() => playDemo("/audiosrc/drumbeat2_90bpm.wav")}
+              onClick={() => playDemo(AudioAssets.DrumBeat2)}
             >
               <GiDrumKit size={36} />
             </button>
@@ -267,9 +273,7 @@ function App() {
             <button
               type="button"
               style={{ padding: "0.25rem" }}
-              onClick={() =>
-                playDemo("/audiosrc/bass_loop_90bpm_got_to_be_real.mp3")
-              }
+              onClick={() => playDemo(AudioAssets.BassLoop)}
             >
               <GiGuitarBassHead size={36} />
             </button>
@@ -283,6 +287,7 @@ function App() {
           <Styled.TrackMute>Muted</Styled.TrackMute>
           <Styled.Width70>Vol</Styled.Width70>
           <Styled.Width70>Speed</Styled.Width70>
+          <Styled.Width70>Frequency</Styled.Width70>
           <Styled.Width70>Looping</Styled.Width70>
           <Styled.Width70>AutoPlay</Styled.Width70>
           <Styled.TrackPlayState>State</Styled.TrackPlayState>
@@ -328,25 +333,25 @@ function App() {
         onClick={() =>
           RATM.registerAudios(
             [
-              "/audiosrc/intro.mp3",
+              AudioAssets.Intro,
               {
                 onEnd: () => console.log("1"),
               },
             ],
             [
-              "/audiosrc/drumbeat_90bpm.wav",
+              AudioAssets.DrumBeat1,
               {
                 onEnd: () => console.log("2"),
               },
             ],
             [
-              "/audiosrc/drumbeat2_90bpm.wav",
+              AudioAssets.DrumBeat2,
               {
                 onEnd: () => console.log("3"),
               },
             ],
             [
-              "/audiosrc/bass_loop_90bpm_got_to_be_real.mp3",
+              AudioAssets.BassLoop,
               {
                 onEnd: () => console.log("4"),
               },

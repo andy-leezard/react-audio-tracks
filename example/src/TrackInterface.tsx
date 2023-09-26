@@ -1,4 +1,4 @@
-import React, { ChangeEvent, useCallback, useState } from "react"
+import React, { ChangeEvent, useCallback, useEffect, useRef, useState } from "react"
 import {
   BsVolumeMuteFill,
   BsVolumeUpFill,
@@ -13,6 +13,8 @@ import { MdQueueMusic } from "react-icons/md"
 import { getFileName } from "./utils"
 import { useTrackStream } from "."
 import type { AudioOptions, TrackState } from "."
+
+const MIN_UPDATE_FREQUENCY_MS = 50
 
 type TrackInterfaceProps = {
   inheritState: TrackState
@@ -30,6 +32,9 @@ const TrackInterface = ({ index, inheritState }: TrackInterfaceProps) => {
     filename: "",
     src: "",
   })
+  const [updateFrequencyMs, setUpdateFrequencyMs] = useState<
+    number | undefined
+  >(undefined)
 
   const handleFileUpload = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -47,6 +52,18 @@ const TrackInterface = ({ index, inheritState }: TrackInterfaceProps) => {
     },
     []
   )
+
+  useEffect(() => {
+    if (instance && typeof updateFrequencyMs === "number") {
+      instance.updateState({
+        updateFrequencyMs: updateFrequencyMs
+          ? updateFrequencyMs > MIN_UPDATE_FREQUENCY_MS
+            ? updateFrequencyMs
+            : MIN_UPDATE_FREQUENCY_MS
+          : undefined,
+      })
+    }
+  }, [updateFrequencyMs])
 
   if (!inheritState || !instance) {
     return <></>
@@ -99,6 +116,15 @@ const TrackInterface = ({ index, inheritState }: TrackInterfaceProps) => {
               playbackRate: e.target.valueAsNumber,
             })
           }}
+        />
+      </UI.Width70>
+      <UI.Width70>
+        <input
+          type="number"
+          value={updateFrequencyMs ?? 0}
+          style={{ width: "60px" }}
+          min={50}
+          onChange={(e) => setUpdateFrequencyMs(e.target.valueAsNumber)}
         />
       </UI.Width70>
       <UI.Width70Interactable
