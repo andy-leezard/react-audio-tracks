@@ -9,6 +9,7 @@
   "scripts": {
     "build": "tsup index.ts --format cjs,esm --dts",
     "release": "pnpm run build && changeset publish",
+    "export-module": "module-export.bat",
     "lint": "tsc"
   },
   "repository": {

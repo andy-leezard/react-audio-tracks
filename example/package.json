@@ -7,7 +7,9 @@
     "dev": "vite",
     "lint": "tsc",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "import-module": "module-import.bat",
+    "export-module": "module-export.bat"
   },
   "dependencies": {
     "react": "^18.2.0",
