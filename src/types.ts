@@ -312,6 +312,8 @@ export type AudioItemState = {
   readonly filename: string
   readonly paused: boolean
   readonly ended: boolean
+  /** Did the audio encounter an error while trying to play? */
+  readonly error: boolean
   readonly started: boolean
   readonly updateFrequencyMs: number | undefined
 }

@@ -402,12 +402,12 @@ class Track {
         if (onEnd) {
           onEnd()
         }
+        this.clearAudio(uid, filename)
         this.#updateStream({
           audioItemState: null,
           innerAudioState: null,
           caption: null,
         })
-        this.clearAudio(uid, filename)
       },
     })
     return audioItem

@@ -15,6 +15,7 @@ class AudioItem {
   #onUpdate: () => void = () => {}
   removeAllListeners: () => void = () => {}
 
+  #error = false
   #started = false
   #paused = false
   #ended = false
@@ -65,16 +66,16 @@ class AudioItem {
       onPause()
     }
     this.#onError = (e: ErrorEvent) => {
-      this.#ended = true
+      this.#error = true
       this.removeAllListeners()
       onError(e)
-      onEnd()
     }
     this.#onUpdate = (e?: Event) => {
-      // if updateFrequencyMs is manually given, ignore the native event
       if ((this.#updateFrequencyMs && !e) || (!this.#updateFrequencyMs && e)) {
+        // Use native frequency
         onUpdate()
       }
+      // Otherwise `onUpdate` is ran at certain frequency via `this.#loopUpdate()`.
     }
     this.#onEnd = () => {
       this.#ended = true
@@ -125,6 +126,7 @@ class AudioItem {
       paused: this.#paused,
       ended: this.#ended,
       started: this.#started,
+      error: this.#error,
       updateFrequencyMs: this.#updateFrequencyMs,
     }
   }
@@ -161,6 +163,7 @@ class AudioItem {
           (!this.#innerAudio ||
             this.#paused ||
             this.#ended ||
+            this.#error ||
             !frequencyIsStillValid)
         ) {
           clearInterval(this.#interval)
