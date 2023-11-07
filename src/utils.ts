@@ -17,7 +17,7 @@ const getCurrentCaption = (
   for (let i = 0; i < subtitles.length; i++) {
     const subtitle = subtitles[i]!
     if (subtitle.from <= currentTimeSec && subtitle.to > currentTimeSec) {
-      const { text, description, ...rest } = subtitle
+      const { text, ...rest } = subtitle
       crnt = { ...crnt, ...rest }
       if (typeof text === "string") {
         crnt.text = text
@@ -25,16 +25,6 @@ const getCurrentCaption = (
         crnt = { ...crnt, text: text[locale]! }
         if (subtitle.metadata) {
           crnt.metadata = subtitle.metadata
-        }
-      }
-      if (description) {
-        if (typeof description === "string") {
-          crnt.description = description
-        } else if (
-          locale &&
-          Object.prototype.hasOwnProperty.call(description, locale)
-        ) {
-          crnt = { ...crnt, description: description[locale] }
         }
       }
       break
