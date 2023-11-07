@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.2.6
+
+### Patch Changes
+
+- 2c98eea: allow accessing audioref on track stream interface and remove a built-in caption property ('description') which should be accessed from the custom 'metadata' property. Keep it less heavy in boilerplate.
+
 ## 1.2.5
 
 ### Patch Changes
