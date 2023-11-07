@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.2.5
+
+### Patch Changes
+
+- 8383035: bugfix/define subtitles on audio registration
+
 ## 1.2.4
 
 ### Patch Changes
