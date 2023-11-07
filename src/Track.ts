@@ -319,12 +319,12 @@ class Track {
     const _keyForSubtitles = keyForSubtitles ?? originalFilename ?? filename
     const _subtitles =
       subtitles ??
-      Object.prototype.hasOwnProperty.call(
+      (Object.prototype.hasOwnProperty.call(
         this.#subtitlesJSON,
         _keyForSubtitles
       )
         ? this.#subtitlesJSON[_keyForSubtitles]!
-        : []
+        : [])
     const audioItem = new AudioItem({
       debug: this.debug,
       innerAudio: audio,
