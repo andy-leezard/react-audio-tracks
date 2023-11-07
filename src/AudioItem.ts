@@ -131,6 +131,10 @@ class AudioItem {
     }
   }
 
+  public unsafe_getInnerAudio(): Readonly<HTMLAudioElement> | null {
+    return this.#innerAudio ?? null
+  }
+
   public getInnerAudioState(): T.InnerAudioState | null {
     if (!this.#innerAudio) return null
     return {

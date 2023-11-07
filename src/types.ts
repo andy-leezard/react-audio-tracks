@@ -35,19 +35,6 @@ export type Subtitle = {
     | {
         [locale: string]: string
       }
-
-  /**
-   *  Extra metadata: Description of the scene
-   *
-   *  Supporting internationalization
-   *
-   *  Example: { "en":"(Footsteps approaching)", "fr": "(Des pas approchent)" }
-   */
-  description?:
-    | string
-    | {
-        [langID: string]: string
-      }
   /**
    * Extra metadata based on the timeline of the audio
    */
@@ -156,15 +143,6 @@ export type CaptionState = {
    * Current caption
    */
   text: string
-
-  /**
-   *  Extra metadata: Description of the scene
-   *
-   *  This has to be given in the subtitles option.
-   *
-   *  Example: "Footsteps approaching"
-   */
-  description?: string
 
   /**
    * Extra metadata based on the timeline of the audio
@@ -334,6 +312,8 @@ export type TrackStream = {
   readonly audioItemState: AudioItemState | null
   caption: CaptionState | null
   readonly innerAudioState: InnerAudioState | null
+  /** directly accessing audio element's ref */
+  readonly innerAudioRef: HTMLAudioElement | null
 }
 
 /**
@@ -363,5 +343,5 @@ export type RegistrationArgTuple = [
   options?: AudioCallbacks &
     AudioOptions & {
       trackIdx?: number
-    }
+    },
 ]

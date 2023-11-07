@@ -32,6 +32,7 @@ class Track {
     audioItemState: null,
     caption: null,
     innerAudioState: null,
+    innerAudioRef: null,
   }
   private stream_listeners: T.Listener<T.TrackStream>[] = []
   updateTrackCallback: (trackState: T.TrackState) => void = () => {}
@@ -91,6 +92,7 @@ class Track {
         caption: null,
         audioItemState: null,
         innerAudioState: null,
+        innerAudioRef: null,
       })
     } else if (!this.#State.autoPlay) {
       Statepayload.isPlaying = false
@@ -98,6 +100,7 @@ class Track {
         trackIsPlaying: false,
         audioItemState: this.#queue[0]?.getState() ?? null,
         innerAudioState: this.#queue[0]?.getInnerAudioState() ?? null,
+        innerAudioRef: this.#queue[0]?.unsafe_getInnerAudio() ?? null,
       })
     }
     this.#updateState(Statepayload)
@@ -340,6 +343,7 @@ class Track {
           trackIsPlaying: true,
           audioItemState: audioItem.getState(),
           innerAudioState: audioItem.getInnerAudioState(),
+          innerAudioRef: audioItem.unsafe_getInnerAudio(),
         }
         if (_subtitles?.length) {
           payload.caption = U.getCurrentCaption(_subtitles, 0, _locale)
@@ -356,6 +360,7 @@ class Track {
         const payload: Partial<T.TrackStream> = {
           audioItemState: audioItem.getState(),
           innerAudioState: audioItem.getInnerAudioState(),
+          innerAudioRef: audioItem.unsafe_getInnerAudio(),
         }
         if (_subtitles?.length) {
           payload.caption = U.getCurrentCaption(
@@ -377,6 +382,7 @@ class Track {
           trackIsPlaying: false,
           audioItemState: audioItem.getState(),
           innerAudioState: audioItem.getInnerAudioState(),
+          innerAudioRef: audioItem.unsafe_getInnerAudio(),
         })
       },
       onEnd: () => {
@@ -387,6 +393,7 @@ class Track {
         this.#updateStream({
           audioItemState: null,
           innerAudioState: null,
+          innerAudioRef: null,
           caption: null,
         })
       },
@@ -406,6 +413,7 @@ class Track {
         this.#updateStream({
           audioItemState: null,
           innerAudioState: null,
+          innerAudioRef: null,
           caption: null,
         })
       },
