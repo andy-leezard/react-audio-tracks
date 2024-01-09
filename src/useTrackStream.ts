@@ -16,7 +16,9 @@ function useTrackStream(
   const [stream, setStream] = useState<T.TrackStream | null>(
     AudiotrackManager.getTrack(trackIdx)?.getStream() ?? null
   )
-  const [track, setTrack] = useState<Track | null>(null)
+  const [track, setTrack] = useState<Track | null>(
+    AudiotrackManager.getTrack(trackIdx) ?? null
+  )
 
   useEffect(() => {
     const disabled = Boolean(options?.disabled)
