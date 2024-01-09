@@ -1,5 +1,11 @@
 # react-audio-tracks
 
+## 1.2.7
+
+### Patch Changes
+
+- 29ce783: bugfix - track instance always returning null at first render
+
 ## 1.2.6
 
 ### Patch Changes
